@@ -118,3 +118,36 @@ public class TestingExecutorsTest extends TestCase {
     }
   }
 }
+export const config = {
+  runtime: 'edge',
+}
+
+export default async function handler(req) {
+  return new Response(
+    JSON.stringify({
+      message: 'Hello, world!',
+    }),
+    {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'public, s-maxage=1200, stale-while-revalidate=600',
+      },
+    }
+  )
+}export default async function Page() {
+  const data = await sql`SELECT * from USERS`;
+
+  return (
+    <>
+      <h1>Users</h1>
+      <ul>
+        {data.map(user => (
+          <li key={user.id}>
+            {user.name}
+          </li>
+        )}
+      </ul>
+    </>
+  );
+}https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MTc3NTM4MjYxMDgzMDY4?story_media_id=3243156517401585876_25749975&igsh=MXZmaHFvMzZmMWxuZw==https://youtu.be/UH7lfoGHOXo?si=sgCYhEr_RmHR3NNFhttps://youtu.be/UH7lfoGHOXo?si=sgCYhEr_RmHR3NNF
