@@ -18,9 +18,11 @@ package com.google.common.base;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Splitter.MapSplitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.testing.NullPointerTester;
@@ -30,7 +32,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import junit.framework.TestCase;
 
-/** @author Julien Silland */
+/**
+ * @author Julien Silland
+ */
+@ElementTypesAreNonnullByDefault
 @GwtCompatible(emulated = true)
 public class SplitterTest extends TestCase {
 
@@ -359,6 +364,7 @@ public class SplitterTest extends TestCase {
     assertThat(letters).containsExactly("a", "b", "c").inOrder();
   }
 
+  @J2ktIncompatible // Kotlin Native's regex is based on Apache Harmony, like old Android
   @GwtIncompatible // java.util.regex.Pattern
   @AndroidIncompatible // Bug in older versions of Android we test against, since fixed.
   public void testPatternSplitLookBehind() {
@@ -372,6 +378,7 @@ public class SplitterTest extends TestCase {
     // splits into chunks ending in :
   }
 
+  @J2ktIncompatible // Kotlin Native's regex is based on Apache Harmony, like old Android
   @GwtIncompatible // java.util.regex.Pattern
   @AndroidIncompatible // Bug in older versions of Android we test against, since fixed.
   public void testPatternSplitWordBoundary() {
@@ -388,6 +395,7 @@ public class SplitterTest extends TestCase {
   }
 
   @AndroidIncompatible // Apparently Gingerbread's regex API is buggy.
+  @J2ktIncompatible // Kotlin Native's regex is based on Apache Harmony, like old Android
   @GwtIncompatible // java.util.regex.Pattern
   public void testPatternSplitWordBoundary_singleWordInput() {
     String string = "foo";
@@ -446,11 +454,7 @@ public class SplitterTest extends TestCase {
 
   @GwtIncompatible // java.util.regex.Pattern
   public void testPatternSplitInvalidPattern() {
-    try {
-      Splitter.on(Pattern.compile("a*"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> Splitter.on(Pattern.compile("a*")));
   }
 
   @GwtIncompatible // java.util.regex.Pattern
@@ -496,6 +500,7 @@ public class SplitterTest extends TestCase {
     assertSplitterIterableIsLazy(Splitter.on(","));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // java.util.regex.Pattern
   @AndroidIncompatible // not clear that j.u.r.Matcher promises to handle mutations during use
   public void testSplitterIterableIsLazy_pattern() {
@@ -670,6 +675,7 @@ public class SplitterTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointers() {
     NullPointerTester tester = new NullPointerTester();

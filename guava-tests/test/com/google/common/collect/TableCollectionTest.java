@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.Table.Cell;
@@ -44,6 +45,7 @@ import java.util.SortedSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Collection tests for {@link Table} implementations.
@@ -52,6 +54,7 @@ import junit.framework.TestSuite;
  * @author Louis Wasserman
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public class TableCollectionTest extends TestCase {
 
   private static final Feature<?>[] COLLECTION_FEATURES = {
@@ -73,6 +76,7 @@ public class TableCollectionTest extends TestCase {
     CollectionFeature.ALLOWS_NULL_QUERIES
   };
 
+  @J2ktIncompatible
   @GwtIncompatible // suite
   public static Test suite() {
     TestSuite suite = new TestSuite();
@@ -767,10 +771,10 @@ public class TableCollectionTest extends TestCase {
     }
   }
 
-  static final Function<Integer, Integer> DIVIDE_BY_2 =
-      new Function<Integer, Integer>() {
+  static final Function<@Nullable Integer, @Nullable Integer> DIVIDE_BY_2 =
+      new Function<@Nullable Integer, @Nullable Integer>() {
         @Override
-        public Integer apply(Integer input) {
+        public @Nullable Integer apply(@Nullable Integer input) {
           return (input == null) ? null : input / 2;
         }
       };
@@ -889,10 +893,10 @@ public class TableCollectionTest extends TestCase {
     }
   }
 
-  static final Function<String, Character> FIRST_CHARACTER =
-      new Function<String, Character>() {
+  static final Function<@Nullable String, @Nullable Character> FIRST_CHARACTER =
+      new Function<@Nullable String, @Nullable Character>() {
         @Override
-        public Character apply(String input) {
+        public @Nullable Character apply(@Nullable String input) {
           return input == null ? null : input.charAt(0);
         }
       };

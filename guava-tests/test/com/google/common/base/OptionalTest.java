@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.EqualsTester;
@@ -29,12 +30,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link Optional}.
  *
  * @author Kurt Alfred Kluever
  */
+@ElementTypesAreNonnullByDefault
 @GwtCompatible(emulated = true)
 public final class OptionalTest extends TestCase {
   public void testToJavaUtil_static() {
@@ -122,7 +125,7 @@ public final class OptionalTest extends TestCase {
   }
 
   public void testOr_nullSupplier_absent() {
-    Supplier<Object> nullSupplier = Suppliers.ofInstance(null);
+    Supplier<Object> nullSupplier = (Supplier<Object>) Suppliers.<@Nullable Object>ofInstance(null);
     Optional<Object> absentOptional = Optional.absent();
     try {
       absentOptional.or(nullSupplier);
@@ -133,7 +136,7 @@ public final class OptionalTest extends TestCase {
 
   @SuppressWarnings("OptionalOfRedundantMethod") // Unit tests for Optional
   public void testOr_nullSupplier_present() {
-    Supplier<String> nullSupplier = Suppliers.ofInstance(null);
+    Supplier<String> nullSupplier = (Supplier<String>) Suppliers.<@Nullable String>ofInstance(null);
     assertEquals("a", Optional.of("a").or(nullSupplier));
   }
 
@@ -200,12 +203,13 @@ public final class OptionalTest extends TestCase {
       Optional<String> unused =
           Optional.of("a")
               .transform(
-                  new Function<String, String>() {
-                    @Override
-                    public String apply(String input) {
-                      return null;
-                    }
-                  });
+                  (Function<String, String>)
+                      new Function<String, @Nullable String>() {
+                        @Override
+                        public @Nullable String apply(String input) {
+                          return null;
+                        }
+                      });
       fail("Should throw if Function returns null.");
     } catch (NullPointerException expected) {
     }
@@ -216,19 +220,20 @@ public final class OptionalTest extends TestCase {
         Optional.absent(),
         Optional.absent()
             .transform(
-                new Function<Object, Object>() {
-                  @Override
-                  public Object apply(Object input) {
-                    return null;
-                  }
-                }));
+                (Function<Object, Object>)
+                    new Function<Object, @Nullable Object>() {
+                      @Override
+                      public @Nullable Object apply(Object input) {
+                        return null;
+                      }
+                    }));
   }
 
   public void testEqualsAndHashCode() {
     new EqualsTester()
         .addEqualityGroup(Optional.absent(), reserialize(Optional.absent()))
-        .addEqualityGroup(Optional.of(new Long(5)), reserialize(Optional.of(new Long(5))))
-        .addEqualityGroup(Optional.of(new Long(42)), reserialize(Optional.of(new Long(42))))
+        .addEqualityGroup(Optional.of(Long.valueOf(5)), reserialize(Optional.of(Long.valueOf(5))))
+        .addEqualityGroup(Optional.of(Long.valueOf(42)), reserialize(Optional.of(Long.valueOf(42))))
         .testEquals();
   }
 
@@ -315,6 +320,7 @@ public final class OptionalTest extends TestCase {
     Number value = first.or(0.5); // fine
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointers() {
     NullPointerTester npTester = new NullPointerTester();

@@ -16,8 +16,10 @@ package com.google.common.net;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.MoreObjects;
 import com.google.common.hash.Hashing;
@@ -95,6 +97,7 @@ import javax.annotation.CheckForNull;
  * @author Erik Kline
  * @since 5.0
  */
+@J2ktIncompatible
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 public final class InetAddresses {
@@ -407,7 +410,8 @@ public final class InetAddresses {
     checkNotNull(ip);
     if (ip instanceof Inet4Address) {
       // For IPv4, Java's formatting is good enough.
-      return ip.getHostAddress();
+      // requireNonNull accommodates Android's @RecentlyNullable annotation on getHostAddress
+      return requireNonNull(ip.getHostAddress());
     }
     checkArgument(ip instanceof Inet6Address);
     byte[] bytes = ip.getAddress();

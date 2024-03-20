@@ -37,17 +37,14 @@ import java.util.TreeSet;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * A builder for a multimap implementation that allows customization of the backing map and value
- * collection implementations used in a particular multimap.
- *
- * <p>This can be used to easily configure multimap data structure implementations not provided
- * explicitly in {@code com.google.common.collect}, for example:
+ * An immutable builder for {@link Multimap} instances, letting you independently select the desired
+ * behaviors (for example, ordering) of the backing map and value-collections. Example:
  *
  * <pre>{@code
- * ListMultimap<String, Integer> treeListMultimap =
- *     MultimapBuilder.treeKeys().arrayListValues().build();
- * SetMultimap<Integer, MyEnum> hashEnumMultimap =
- *     MultimapBuilder.hashKeys().enumSetValues(MyEnum.class).build();
+ * ListMultimap<UserId, ErrorResponse> errorsByUser =
+ *     MultimapBuilder.linkedHashKeys().arrayListValues().build();
+ * SortedSetMultimap<String, Method> methodsForName =
+ *     MultimapBuilder.treeKeys().treeSetValues(this::compareMethods).build();
  * }</pre>
  *
  * <p>{@code MultimapBuilder} instances are immutable. Invoking a configuration method has no effect
@@ -433,7 +430,7 @@ public abstract class MultimapBuilder<K0 extends @Nullable Object, V0 extends @N
     @Override
     public <K extends K0, V extends V0> ListMultimap<K, V> build(
         Multimap<? extends K, ? extends V> multimap) {
-      return (ListMultimap<K, V>) super.build(multimap);
+      return (ListMultimap<K, V>) super.<K, V>build(multimap);
     }
   }
 
@@ -453,7 +450,7 @@ public abstract class MultimapBuilder<K0 extends @Nullable Object, V0 extends @N
     @Override
     public <K extends K0, V extends V0> SetMultimap<K, V> build(
         Multimap<? extends K, ? extends V> multimap) {
-      return (SetMultimap<K, V>) super.build(multimap);
+      return (SetMultimap<K, V>) super.<K, V>build(multimap);
     }
   }
 
@@ -473,7 +470,7 @@ public abstract class MultimapBuilder<K0 extends @Nullable Object, V0 extends @N
     @Override
     public <K extends K0, V extends V0> SortedSetMultimap<K, V> build(
         Multimap<? extends K, ? extends V> multimap) {
-      return (SortedSetMultimap<K, V>) super.build(multimap);
+      return (SortedSetMultimap<K, V>) super.<K, V>build(multimap);
     }
   }
 }

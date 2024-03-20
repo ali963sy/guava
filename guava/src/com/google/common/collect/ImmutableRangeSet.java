@@ -22,8 +22,8 @@ import static com.google.common.collect.SortedLists.KeyAbsentBehavior.NEXT_LOWER
 import static com.google.common.collect.SortedLists.KeyPresentBehavior.ANY_PRESENT;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.SortedLists.KeyAbsentBehavior;
 import com.google.common.collect.SortedLists.KeyPresentBehavior;
 import com.google.common.primitives.Ints;
@@ -48,7 +48,7 @@ import javax.annotation.CheckForNull;
  * @author Louis Wasserman
  * @since 14.0
  */
-@Beta
+@SuppressWarnings("rawtypes") // https://github.com/google/guava/issues/989
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 public final class ImmutableRangeSet<C extends Comparable> extends AbstractRangeSet<C>
@@ -161,7 +161,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     int ceilingIndex =
         SortedLists.binarySearch(
             ranges,
-            Range.<C>lowerBoundFn(),
+            Range::lowerBound,
             otherRange.lowerBound,
             Ordering.natural(),
             ANY_PRESENT,
@@ -181,7 +181,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     int index =
         SortedLists.binarySearch(
             ranges,
-            Range.<C>lowerBoundFn(),
+            Range::lowerBound,
             otherRange.lowerBound,
             Ordering.natural(),
             ANY_PRESENT,
@@ -195,7 +195,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     int index =
         SortedLists.binarySearch(
             ranges,
-            Range.<C>lowerBoundFn(),
+            Range::lowerBound,
             Cut.belowValue(value),
             Ordering.natural(),
             ANY_PRESENT,
@@ -369,6 +369,14 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     boolean isPartialView() {
       return true;
     }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   @Override
@@ -444,7 +452,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
       fromIndex =
           SortedLists.binarySearch(
               ranges,
-              Range.<C>upperBoundFn(),
+              Range::upperBound,
               range.lowerBound,
               KeyPresentBehavior.FIRST_AFTER,
               KeyAbsentBehavior.NEXT_HIGHER);
@@ -457,7 +465,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
       toIndex =
           SortedLists.binarySearch(
               ranges,
-              Range.<C>lowerBoundFn(),
+              Range::lowerBound,
               range.upperBound,
               KeyPresentBehavior.FIRST_PRESENT,
               KeyAbsentBehavior.NEXT_HIGHER);
@@ -487,6 +495,15 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
         @Override
         boolean isPartialView() {
           return true;
+        }
+
+        // redeclare to help optimizers with b/310253115
+        @SuppressWarnings("RedundantOverride")
+        @Override
+        @J2ktIncompatible // serialization
+        @GwtIncompatible // serialization
+        Object writeReplace() {
+          return super.writeReplace();
         }
       };
     }
@@ -556,7 +573,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
       this.domain = domain;
     }
 
-    @CheckForNull private transient Integer size;
+    @LazyInit @CheckForNull private transient Integer size;
 
     @Override
     public int size() {
@@ -692,10 +709,12 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     }
 
     @Override
+    @J2ktIncompatible // serialization
     Object writeReplace() {
       return new AsSetSerializedForm<C>(ranges, domain);
     }
 
+    @J2ktIncompatible // java.io.ObjectInputStream
     private void readObject(ObjectInputStream stream) throws InvalidObjectException {
       throw new InvalidObjectException("Use SerializedForm");
     }
@@ -845,10 +864,12 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     }
   }
 
+  @J2ktIncompatible // java.io.ObjectInputStream
   Object writeReplace() {
     return new SerializedForm<C>(ranges);
   }
 
+  @J2ktIncompatible // java.io.ObjectInputStream
   private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }

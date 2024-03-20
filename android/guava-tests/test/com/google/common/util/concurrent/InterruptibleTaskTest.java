@@ -16,6 +16,7 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.InterruptibleTask.Blocker;
 import java.nio.channels.spi.AbstractInterruptibleChannel;
@@ -23,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class InterruptibleTaskTest extends TestCase {
 
@@ -30,10 +32,10 @@ public final class InterruptibleTaskTest extends TestCase {
   // transition to DONE
   public void testInterruptThrows() throws Exception {
     final CountDownLatch isInterruptibleRegistered = new CountDownLatch(1);
-    InterruptibleTask<Void> task =
-        new InterruptibleTask<Void>() {
+    InterruptibleTask<@Nullable Void> task =
+        new InterruptibleTask<@Nullable Void>() {
           @Override
-          Void runInterruptibly() throws Exception {
+          @Nullable Void runInterruptibly() throws Exception {
             BrokenChannel bc = new BrokenChannel();
             bc.doBegin();
             isInterruptibleRegistered.countDown();
@@ -52,7 +54,7 @@ public final class InterruptibleTaskTest extends TestCase {
           }
 
           @Override
-          void afterRanInterruptiblySuccess(Void result) {}
+          void afterRanInterruptiblySuccess(@Nullable Void result) {}
 
           @Override
           void afterRanInterruptiblyFailure(Throwable error) {}
@@ -60,14 +62,10 @@ public final class InterruptibleTaskTest extends TestCase {
     Thread runner = new Thread(task);
     runner.start();
     isInterruptibleRegistered.await();
-    try {
-      task.interruptTask();
-      fail();
-    } catch (RuntimeException expected) {
-      assertThat(expected)
-          .hasMessageThat()
-          .isEqualTo("I bet you didn't think Thread.interrupt could throw");
-    }
+    RuntimeException expected = assertThrows(RuntimeException.class, () -> task.interruptTask());
+    assertThat(expected)
+        .hasMessageThat()
+        .isEqualTo("I bet you didn't think Thread.interrupt could throw");
     // We need to wait for the runner to exit.  It used to be that the runner would get stuck in the
     // busy loop when interrupt threw.
     runner.join(TimeUnit.SECONDS.toMillis(10));
@@ -100,10 +98,10 @@ public final class InterruptibleTaskTest extends TestCase {
   public void testInterruptIsSlow() throws Exception {
     final CountDownLatch isInterruptibleRegistered = new CountDownLatch(1);
     final SlowChannel slowChannel = new SlowChannel();
-    final InterruptibleTask<Void> task =
-        new InterruptibleTask<Void>() {
+    final InterruptibleTask<@Nullable Void> task =
+        new InterruptibleTask<@Nullable Void>() {
           @Override
-          Void runInterruptibly() throws Exception {
+          @Nullable Void runInterruptibly() throws Exception {
             slowChannel.doBegin();
             isInterruptibleRegistered.countDown();
             try {
@@ -126,7 +124,7 @@ public final class InterruptibleTaskTest extends TestCase {
           }
 
           @Override
-          void afterRanInterruptiblySuccess(Void result) {}
+          void afterRanInterruptiblySuccess(@Nullable Void result) {}
 
           @Override
           void afterRanInterruptiblyFailure(Throwable error) {}

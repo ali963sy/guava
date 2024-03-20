@@ -18,6 +18,7 @@ package com.google.common.testing;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -26,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link FakeTicker}.
@@ -41,6 +43,9 @@ public class FakeTickerTest extends TestCase {
     tester.testAllPublicInstanceMethods(new FakeTicker());
   }
 
+  @GwtIncompatible // java.time.Duration
+  @SuppressWarnings("Java7ApiChecker") // guava-android can rely on library desugaring now.
+  @IgnoreJRERequirement // TODO: b/288085449 - Remove this once we use library-desugaring scents.
   public void testAdvance() {
     FakeTicker ticker = new FakeTicker();
     assertEquals(0, ticker.read());
@@ -48,6 +53,8 @@ public class FakeTickerTest extends TestCase {
     assertEquals(10, ticker.read());
     ticker.advance(1, TimeUnit.MILLISECONDS);
     assertEquals(1000010L, ticker.read());
+    ticker.advance(Duration.ofMillis(1));
+    assertEquals(2000010L, ticker.read());
   }
 
   public void testAutoIncrementStep_returnsSameInstance() {
@@ -74,6 +81,16 @@ public class FakeTickerTest extends TestCase {
     assertEquals(0, ticker.read());
     assertEquals(3000000000L, ticker.read());
     assertEquals(6000000000L, ticker.read());
+  }
+
+  @GwtIncompatible // java.time.Duration
+  @SuppressWarnings("Java7ApiChecker") // guava-android can rely on library desugaring now.
+  @IgnoreJRERequirement // TODO: b/288085449 - Remove this once we use library-desugaring scents.
+  public void testAutoIncrementStep_duration() {
+    FakeTicker ticker = new FakeTicker().setAutoIncrementStep(Duration.ofMillis(1));
+    assertEquals(0, ticker.read());
+    assertEquals(1000000, ticker.read());
+    assertEquals(2000000, ticker.read());
   }
 
   public void testAutoIncrementStep_resetToZero() {
@@ -108,9 +125,9 @@ public class FakeTickerTest extends TestCase {
     int numberOfThreads = 64;
     runConcurrentTest(
         numberOfThreads,
-        new Callable<Void>() {
+        new Callable<@Nullable Void>() {
           @Override
-          public Void call() throws Exception {
+          public @Nullable Void call() throws Exception {
             // adds two nanoseconds to the ticker
             ticker.advance(1L);
             Thread.sleep(10);
@@ -132,9 +149,9 @@ public class FakeTickerTest extends TestCase {
     int numberOfThreads = 64;
     runConcurrentTest(
         numberOfThreads,
-        new Callable<Void>() {
+        new Callable<@Nullable Void>() {
           @Override
-          public Void call() throws Exception {
+          public @Nullable Void call() throws Exception {
             long unused = ticker.read();
             return null;
           }
@@ -145,7 +162,7 @@ public class FakeTickerTest extends TestCase {
 
   /** Runs {@code callable} concurrently {@code numberOfThreads} times. */
   @GwtIncompatible // concurrency
-  private void runConcurrentTest(int numberOfThreads, final Callable<Void> callable)
+  private void runConcurrentTest(int numberOfThreads, final Callable<@Nullable Void> callable)
       throws Exception {
     ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
     final CountDownLatch startLatch = new CountDownLatch(numberOfThreads);
@@ -154,9 +171,9 @@ public class FakeTickerTest extends TestCase {
       @SuppressWarnings("unused") // https://errorprone.info/bugpattern/FutureReturnValueIgnored
       Future<?> possiblyIgnoredError =
           executorService.submit(
-              new Callable<Void>() {
+              new Callable<@Nullable Void>() {
                 @Override
-                public Void call() throws Exception {
+                public @Nullable Void call() throws Exception {
                   startLatch.countDown();
                   startLatch.await();
                   callable.call();

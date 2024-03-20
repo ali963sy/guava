@@ -18,12 +18,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.CollectPreconditions.checkRemove;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.MapMaker.Dummy;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import com.google.j2objc.annotations.Weak;
 import com.google.j2objc.annotations.WeakOuter;
 import java.io.IOException;
@@ -65,6 +67,7 @@ import javax.annotation.CheckForNull;
  * @author Doug Lea ({@code ConcurrentHashMap})
  */
 // TODO(kak): Consider removing @CanIgnoreReturnValue from this class.
+@J2ktIncompatible
 @GwtIncompatible
 @SuppressWarnings({
   "GuardedBy", // TODO(b/35466881): Fix or suppress.
@@ -486,6 +489,7 @@ class MapMakerInternalMap<
     }
 
     @Override
+    @CheckForNull
     public final V getValue() {
       return valueReference.get();
     }
@@ -1155,6 +1159,7 @@ class MapMakerInternalMap<
    * Gets the value from an entry. Returns {@code null} if the entry is invalid, partially-collected
    * or computing.
    */
+  @CheckForNull
   V getLiveValue(E entry) {
     if (entry.getKey() == null) {
       return null;
@@ -1164,7 +1169,7 @@ class MapMakerInternalMap<
 
   @SuppressWarnings("unchecked")
   final Segment<K, V, E, S>[] newSegmentArray(int ssize) {
-    return new Segment[ssize];
+    return (Segment<K, V, E, S>[]) new Segment<?, ?, ?, ?>[ssize];
   }
 
   // Inner Classes
@@ -1263,6 +1268,7 @@ class MapMakerInternalMap<
     }
 
     /** Returns a copy of the given {@code entry}. */
+    @CheckForNull
     E copyEntry(E original, E newNext) {
       return this.map.entryHelper.copy(self(), original, newNext);
     }
@@ -1350,6 +1356,7 @@ class MapMakerInternalMap<
     }
 
     /** Unsafely removes the given entry from the given chain in this segment's hash table. */
+    @CheckForNull
     E removeFromChainForTesting(InternalEntry<K, V, ?> first, InternalEntry<K, V, ?> entry) {
       return removeFromChain(castForTesting(first), castForTesting(entry));
     }
@@ -1408,6 +1415,7 @@ class MapMakerInternalMap<
     }
 
     /** Returns first entry of bin for given hash. */
+    @CheckForNull
     E getFirst(int hash) {
       // read this volatile field only once
       AtomicReferenceArray<E> table = this.table;
@@ -1416,6 +1424,7 @@ class MapMakerInternalMap<
 
     // Specialized implementations of map methods
 
+    @CheckForNull
     E getEntry(Object key, int hash) {
       if (count != 0) { // read-volatile
         for (E e = getFirst(hash); e != null; e = e.getNext()) {
@@ -1438,10 +1447,12 @@ class MapMakerInternalMap<
       return null;
     }
 
+    @CheckForNull
     E getLiveEntry(Object key, int hash) {
       return getEntry(key, hash);
     }
 
+    @CheckForNull
     V get(Object key, int hash) {
       try {
         E e = getLiveEntry(key, hash);
@@ -1501,6 +1512,7 @@ class MapMakerInternalMap<
       }
     }
 
+    @CheckForNull
     V put(K key, int hash, V value, boolean onlyIfAbsent) {
       lock();
       try {
@@ -1674,6 +1686,7 @@ class MapMakerInternalMap<
       }
     }
 
+    @CheckForNull
     V replace(K key, int hash, V newValue) {
       lock();
       try {
@@ -1715,6 +1728,7 @@ class MapMakerInternalMap<
       }
     }
 
+    @CheckForNull
     @CanIgnoreReturnValue
     V remove(Object key, int hash) {
       lock();
@@ -1829,6 +1843,7 @@ class MapMakerInternalMap<
      * @return the new first entry for the table
      */
     @GuardedBy("this")
+    @CheckForNull
     E removeFromChain(E first, E entry) {
       int newCount = count;
       E newFirst = entry.getNext();
@@ -2041,7 +2056,9 @@ class MapMakerInternalMap<
 
     @SuppressWarnings("unchecked")
     @Override
-    public StrongKeyStrongValueEntry<K, V> castForTesting(InternalEntry<K, V, ?> entry) {
+    @CheckForNull
+    public StrongKeyStrongValueEntry<K, V> castForTesting(
+        @CheckForNull InternalEntry<K, V, ?> entry) {
       return (StrongKeyStrongValueEntry<K, V>) entry;
     }
   }
@@ -2070,7 +2087,9 @@ class MapMakerInternalMap<
 
     @SuppressWarnings("unchecked")
     @Override
-    public StrongKeyWeakValueEntry<K, V> castForTesting(InternalEntry<K, V, ?> entry) {
+    @CheckForNull
+    public StrongKeyWeakValueEntry<K, V> castForTesting(
+        @CheckForNull InternalEntry<K, V, ?> entry) {
       return (StrongKeyWeakValueEntry<K, V>) entry;
     }
 
@@ -2200,7 +2219,8 @@ class MapMakerInternalMap<
 
     @SuppressWarnings("unchecked")
     @Override
-    public WeakKeyWeakValueEntry<K, V> castForTesting(InternalEntry<K, V, ?> entry) {
+    @CheckForNull
+    public WeakKeyWeakValueEntry<K, V> castForTesting(@CheckForNull InternalEntry<K, V, ?> entry) {
       return (WeakKeyWeakValueEntry<K, V>) entry;
     }
 
@@ -2370,6 +2390,7 @@ class MapMakerInternalMap<
    * Returns the internal entry for the specified key. The entry may be computing or partially
    * collected. Does not impact recency ordering.
    */
+  @CheckForNull
   E getEntry(@CheckForNull Object key) {
     if (key == null) {
       return null;
@@ -2502,7 +2523,7 @@ class MapMakerInternalMap<
     }
   }
 
-  @CheckForNull transient Set<K> keySet;
+  @LazyInit @CheckForNull transient Set<K> keySet;
 
   @Override
   public Set<K> keySet() {
@@ -2510,7 +2531,7 @@ class MapMakerInternalMap<
     return (ks != null) ? ks : (keySet = new KeySet());
   }
 
-  @CheckForNull transient Collection<V> values;
+  @LazyInit @CheckForNull transient Collection<V> values;
 
   @Override
   public Collection<V> values() {
@@ -2518,7 +2539,7 @@ class MapMakerInternalMap<
     return (vs != null) ? vs : (values = new Values());
   }
 
-  @CheckForNull transient Set<Entry<K, V>> entrySet;
+  @LazyInit @CheckForNull transient Set<Entry<K, V>> entrySet;
 
   @Override
   public Set<Entry<K, V>> entrySet() {
@@ -2868,6 +2889,7 @@ class MapMakerInternalMap<
         this);
   }
 
+  @J2ktIncompatible // java.io.ObjectInputStream
   private void readObject(ObjectInputStream in) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializationProxy");
   }
@@ -2918,6 +2940,7 @@ class MapMakerInternalMap<
     }
 
     @SuppressWarnings("deprecation") // serialization of deprecated feature
+    @J2ktIncompatible // java.io.ObjectInputStream
     MapMaker readMapMaker(ObjectInputStream in) throws IOException {
       int size = in.readInt();
       return new MapMaker()
@@ -2929,6 +2952,7 @@ class MapMakerInternalMap<
     }
 
     @SuppressWarnings("unchecked")
+    @J2ktIncompatible // java.io.ObjectInputStream
     void readEntries(ObjectInputStream in) throws IOException, ClassNotFoundException {
       while (true) {
         K key = (K) in.readObject();
@@ -2964,6 +2988,7 @@ class MapMakerInternalMap<
       writeMapTo(out);
     }
 
+    @J2ktIncompatible // java.io.ObjectInputStream
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
       in.defaultReadObject();
       MapMaker mapMaker = readMapMaker(in);

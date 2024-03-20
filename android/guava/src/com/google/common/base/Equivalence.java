@@ -157,8 +157,7 @@ public abstract class Equivalence<T> {
    * @since 10.0
    */
   public final <S extends @Nullable T> Wrapper<S> wrap(@ParametricNullness S reference) {
-    Wrapper<S> w = new Wrapper<>(this, reference);
-    return w;
+    return new Wrapper<>(this, reference);
   }
 
   /**

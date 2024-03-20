@@ -17,6 +17,7 @@
 package com.google.common.testing.anotherpackage;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Tests for {@link ForwardingWrapperTester}. Live in a different package to detect reflection
@@ -120,7 +122,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
 
               @SuppressWarnings("EqualsHashCode")
               @Override
-              public boolean equals(Object o) {
+              public boolean equals(@Nullable Object o) {
                 if (o instanceof ForwardingRunnable) {
                   ForwardingRunnable that = (ForwardingRunnable) o;
                   return runnable.equals(that.runnable);
@@ -142,7 +144,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
           public Runnable apply(final Runnable runnable) {
             return new ForwardingRunnable(runnable) {
               @Override
-              public boolean equals(Object o) {
+              public boolean equals(@Nullable Object o) {
                 if (o instanceof ForwardingRunnable) {
                   ForwardingRunnable that = (ForwardingRunnable) o;
                   return runnable.equals(that.runnable);
@@ -264,11 +266,11 @@ public class ForwardingWrapperTesterTest extends TestCase {
   }
 
   public void testNotInterfaceType() {
-    try {
-      new ForwardingWrapperTester().testForwarding(String.class, Functions.<String>identity());
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new ForwardingWrapperTester()
+                .testForwarding(String.class, Functions.<String>identity()));
   }
 
   public void testNulls() {
@@ -531,7 +533,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
 
   private interface Equals {
     @Override
-    boolean equals(Object obj);
+    boolean equals(@Nullable Object obj);
 
     @Override
     int hashCode();
@@ -582,6 +584,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
     // A method that is defined to 'return this'
     @CanIgnoreReturnValue
     ChainingCalls chainingCall();
+
     // A method that just happens to return a ChainingCalls object
     ChainingCalls nonChainingCall();
   }

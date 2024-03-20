@@ -26,6 +26,7 @@ import static java.math.RoundingMode.UNNECESSARY;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Ascii;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.CheckForNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A binary encoding scheme for reversibly translating between byte sequences and printable ASCII
@@ -135,12 +137,8 @@ public abstract class BaseEncoding {
    * @since 15.0
    */
   public static final class DecodingException extends IOException {
-    DecodingException(String message) {
+    DecodingException(@Nullable String message) {
       super(message);
-    }
-
-    DecodingException(Throwable cause) {
-      super(cause);
     }
   }
 
@@ -169,12 +167,14 @@ public abstract class BaseEncoding {
    * {@code Writer}. When the returned {@code OutputStream} is closed, so is the backing {@code
    * Writer}.
    */
+  @J2ktIncompatible
   @GwtIncompatible // Writer,OutputStream
   public abstract OutputStream encodingStream(Writer writer);
 
   /**
    * Returns a {@code ByteSink} that writes base-encoded bytes to the specified {@code CharSink}.
    */
+  @J2ktIncompatible
   @GwtIncompatible // ByteSink,CharSink
   public final ByteSink encodingSink(CharSink encodedSink) {
     checkNotNull(encodedSink);
@@ -239,6 +239,7 @@ public abstract class BaseEncoding {
    * Returns an {@code InputStream} that decodes base-encoded input from the specified {@code
    * Reader}. The returned stream throws a {@link DecodingException} upon decoding-specific errors.
    */
+  @J2ktIncompatible
   @GwtIncompatible // Reader,InputStream
   public abstract InputStream decodingStream(Reader reader);
 
@@ -246,6 +247,7 @@ public abstract class BaseEncoding {
    * Returns a {@code ByteSource} that reads base-encoded bytes from the specified {@code
    * CharSource}.
    */
+  @J2ktIncompatible
   @GwtIncompatible // ByteSource,CharSource
   public final ByteSource decodingSource(CharSource encodedSource) {
     checkNotNull(encodedSource);
@@ -324,6 +326,7 @@ public abstract class BaseEncoding {
    *
    * @throws IllegalStateException if the alphabet used by this encoding contains mixed upper- and
    *     lower-case characters
+   * @since 32.0.0
    */
   public abstract BaseEncoding ignoreCase();
 
@@ -427,7 +430,7 @@ public abstract class BaseEncoding {
     return BASE16;
   }
 
-  private static final class Alphabet {
+  static final class Alphabet {
     private final String name;
     // this is meant to be immutable -- don't modify it!
     private final char[] chars;
@@ -608,7 +611,7 @@ public abstract class BaseEncoding {
     }
   }
 
-  static class StandardBaseEncoding extends BaseEncoding {
+  private static class StandardBaseEncoding extends BaseEncoding {
     final Alphabet alphabet;
 
     @CheckForNull final Character paddingChar;
@@ -631,6 +634,7 @@ public abstract class BaseEncoding {
       return alphabet.charsPerChunk * divide(bytes, alphabet.bytesPerChunk, CEILING);
     }
 
+    @J2ktIncompatible
     @GwtIncompatible // Writer,OutputStream
     @Override
     public OutputStream encodingStream(Writer out) {
@@ -772,6 +776,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
+    @J2ktIncompatible
     @GwtIncompatible // Reader,InputStream
     public InputStream decodingStream(Reader reader) {
       checkNotNull(reader);
@@ -943,7 +948,7 @@ public abstract class BaseEncoding {
     }
   }
 
-  static final class Base16Encoding extends StandardBaseEncoding {
+  private static final class Base16Encoding extends StandardBaseEncoding {
     final char[] encoding = new char[512];
 
     Base16Encoding(String name, String alphabetChars) {
@@ -990,7 +995,7 @@ public abstract class BaseEncoding {
     }
   }
 
-  static final class Base64Encoding extends StandardBaseEncoding {
+  private static final class Base64Encoding extends StandardBaseEncoding {
     Base64Encoding(String name, String alphabetChars, @CheckForNull Character paddingChar) {
       this(new Alphabet(name, alphabetChars.toCharArray()), paddingChar);
     }
@@ -1047,6 +1052,7 @@ public abstract class BaseEncoding {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible
   static Reader ignoringReader(Reader delegate, String toIgnore) {
     checkNotNull(delegate);
@@ -1104,6 +1110,7 @@ public abstract class BaseEncoding {
     };
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // Writer
   static Writer separatingWriter(Writer delegate, String separator, int afterEveryChars) {
     Appendable separatingAppendable = separatingAppendable(delegate, separator, afterEveryChars);
@@ -1155,6 +1162,7 @@ public abstract class BaseEncoding {
           + separator.length() * divide(Math.max(0, unseparatedSize - 1), afterEveryChars, FLOOR);
     }
 
+    @J2ktIncompatible
     @GwtIncompatible // Writer,OutputStream
     @Override
     public OutputStream encodingStream(Writer output) {
@@ -1196,6 +1204,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
+    @J2ktIncompatible
     @GwtIncompatible // Reader,InputStream
     public InputStream decodingStream(Reader reader) {
       return delegate.decodingStream(ignoringReader(reader, separator));

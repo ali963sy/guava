@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import java.io.Serializable;
@@ -53,7 +52,7 @@ public final class Chars {
   /**
    * The number of bytes required to represent a primitive {@code char} value.
    *
-   * <p><b>Java 8 users:</b> use {@link Character#BYTES} instead.
+   * <p><b>Java 8+ users:</b> use {@link Character#BYTES} instead.
    */
   public static final int BYTES = Character.SIZE / Byte.SIZE;
 
@@ -61,7 +60,7 @@ public final class Chars {
    * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Character)
    * value).hashCode()}.
    *
-   * <p><b>Java 8 users:</b> use {@link Character#hashCode(char)} instead.
+   * <p><b>Java 8+ users:</b> use {@link Character#hashCode(char)} instead.
    *
    * @param value a primitive {@code char} value
    * @return a hash code for the value
@@ -106,8 +105,8 @@ public final class Chars {
    * Compares the two specified {@code char} values. The sign of the value returned is the same as
    * that of {@code ((Character) a).compareTo(b)}.
    *
-   * <p><b>Note for Java 7 and later:</b> this method should be treated as deprecated; use the
-   * equivalent {@link Character#compare} method instead.
+   * <p><b>Java 7+ users:</b> this method should be treated as deprecated; use the equivalent {@link
+   * Character#compare} method instead.
    *
    * @param a the first {@code char} to compare
    * @param b the second {@code char} to compare
@@ -258,7 +257,6 @@ public final class Chars {
    * @throws IllegalArgumentException if {@code min > max}
    * @since 21.0
    */
-  @Beta
   public static char constrainToRange(char value, char min, char max) {
     checkArgument(min <= max, "min (%s) must be less than or equal to max (%s)", min, max);
     return value < min ? min : value < max ? value : max;
@@ -496,7 +494,7 @@ public final class Chars {
    *
    * <p>The provided "distance" may be negative, which will rotate left.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(char[] array, int distance) {
     rotate(array, distance, 0, array.length);
@@ -512,7 +510,7 @@ public final class Chars {
    *
    * @throws IndexOutOfBoundsException if {@code fromIndex < 0}, {@code toIndex > array.length}, or
    *     {@code toIndex > fromIndex}
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(char[] array, int distance, int fromIndex, int toIndex) {
     // See Ints.rotate for more details about possible algorithms here.

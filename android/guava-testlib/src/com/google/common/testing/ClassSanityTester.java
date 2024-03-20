@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.testing.NullPointerTester.isNullable;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -54,6 +54,7 @@ import java.util.Set;
 import javax.annotation.CheckForNull;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Tester that runs automated sanity tests for any given class. A typical use case is to test static
@@ -79,8 +80,8 @@ import junit.framework.AssertionFailedError;
  * @author Ben Yu
  * @since 14.0
  */
-@Beta
 @GwtIncompatible
+@J2ktIncompatible
 public final class ClassSanityTester {
 
   private static final Ordering<Invokable<?, ?>> BY_METHOD_NAME =
@@ -337,13 +338,14 @@ public final class ClassSanityTester {
    * @return The instantiated instance, or {@code null} if the class has no non-private constructor
    *     or factory method to be constructed.
    */
-  @CheckForNull
-  <T> T instantiate(Class<T> cls)
-      throws ParameterNotInstantiableException, IllegalAccessException, InvocationTargetException,
+  <T> @Nullable T instantiate(Class<T> cls)
+      throws ParameterNotInstantiableException,
+          IllegalAccessException,
+          InvocationTargetException,
           FactoryMethodReturnsNullException {
     if (cls.isEnum()) {
       T[] constants = cls.getEnumConstants();
-      if (constants.length > 0) {
+      if (constants != null && constants.length > 0) {
         return constants[0];
       } else {
         return null;
@@ -386,8 +388,7 @@ public final class ClassSanityTester {
    *     class, preventing its methods from being accessible.
    * @throws InvocationTargetException if a static method threw exception.
    */
-  @CheckForNull
-  private <T> T instantiate(Invokable<?, ? extends T> factory)
+  private <T> @Nullable T instantiate(Invokable<?, ? extends T> factory)
       throws ParameterNotInstantiableException, InvocationTargetException, IllegalAccessException {
     return invoke(factory, getDummyArguments(factory));
   }
@@ -496,13 +497,14 @@ public final class ClassSanityTester {
      * @return this tester
      */
     @CanIgnoreReturnValue
+    @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
     public FactoryMethodReturnValueTester testSerializable() throws Exception {
       for (Invokable<?, ?> factory : getFactoriesToTest()) {
         Object instance = instantiate(factory);
         if (instance != null) {
           try {
             SerializableTester.reserialize(instance);
-          } catch (RuntimeException e) {
+          } catch (Exception e) { // sneaky checked exception
             AssertionError error =
                 new AssertionFailedError("Serialization failed on return value of " + factory);
             error.initCause(e.getCause());
@@ -522,6 +524,7 @@ public final class ClassSanityTester {
      * @return this tester
      */
     @CanIgnoreReturnValue
+    @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
     public FactoryMethodReturnValueTester testEqualsAndSerializable() throws Exception {
       for (Invokable<?, ?> factory : getFactoriesToTest()) {
         try {
@@ -533,7 +536,7 @@ public final class ClassSanityTester {
         if (instance != null) {
           try {
             SerializableTester.reserializeAndAssert(instance);
-          } catch (RuntimeException e) {
+          } catch (Exception e) { // sneaky checked exception
             AssertionError error =
                 new AssertionFailedError("Serialization failed on return value of " + factory);
             error.initCause(e.getCause());
@@ -576,7 +579,7 @@ public final class ClassSanityTester {
           IllegalAccessException, InvocationTargetException, FactoryMethodReturnsNullException {
     List<Parameter> params = factory.getParameters();
     List<FreshValueGenerator> argGenerators = Lists.newArrayListWithCapacity(params.size());
-    List<Object> args = Lists.newArrayListWithCapacity(params.size());
+    List<@Nullable Object> args = Lists.newArrayListWithCapacity(params.size());
     for (Parameter param : params) {
       FreshValueGenerator generator = newFreshValueGenerator();
       argGenerators.add(generator);
@@ -634,7 +637,7 @@ public final class ClassSanityTester {
       Object shouldBeEqualArg = generateDummyArg(param, newFreshValueGenerator());
       if (arg != shouldBeEqualArg
           && Objects.equal(arg, shouldBeEqualArg)
-          && hashCodeInsensitiveToArgReference(factory, args, i, shouldBeEqualArg)
+          && hashCodeInsensitiveToArgReference(factory, args, i, checkNotNull(shouldBeEqualArg))
           && hashCodeInsensitiveToArgReference(
               factory, args, i, generateDummyArg(param, newFreshValueGenerator()))) {
         // If the implementation uses identityHashCode(), referential equality is
@@ -662,6 +665,7 @@ public final class ClassSanityTester {
     FreshValueGenerator generator =
         new FreshValueGenerator() {
           @Override
+          @CheckForNull
           Object interfaceMethodCalled(Class<?> interfaceType, Method method) {
             return getDummyValue(TypeToken.of(interfaceType).method(method).getReturnType());
           }
@@ -672,8 +676,7 @@ public final class ClassSanityTester {
     return generator;
   }
 
-  @CheckForNull
-  private static Object generateDummyArg(Parameter param, FreshValueGenerator generator)
+  private static @Nullable Object generateDummyArg(Parameter param, FreshValueGenerator generator)
       throws ParameterNotInstantiableException {
     if (isNullable(param)) {
       return null;
@@ -742,6 +745,7 @@ public final class ClassSanityTester {
     return args;
   }
 
+  @CheckForNull
   private <T> T getDummyValue(TypeToken<T> type) {
     Class<? super T> rawType = type.getRawType();
     @SuppressWarnings("unchecked") // Assume all default values are generics safe.
@@ -769,8 +773,7 @@ public final class ClassSanityTester {
     return instance;
   }
 
-  @CheckForNull
-  private static <T> T invoke(Invokable<?, ? extends T> factory, List<?> args)
+  private static <T> @Nullable T invoke(Invokable<?, ? extends T> factory, List<?> args)
       throws InvocationTargetException, IllegalAccessException {
     T returnValue = factory.invoke(null, args.toArray());
     if (returnValue == null) {
@@ -836,7 +839,7 @@ public final class ClassSanityTester {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       return obj instanceof SerializableDummyProxy;
     }
 

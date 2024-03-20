@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.testing.Helpers;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.SerializableTester;
@@ -31,6 +32,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link Chars}.
@@ -38,7 +40,7 @@ import junit.framework.TestCase;
  * @author Kevin Bourrillion
  */
 @GwtCompatible(emulated = true)
-@SuppressWarnings("cast") // redundant casts are intentional and harmless
+@ElementTypesAreNonnullByDefault
 public class CharsTest extends TestCase {
   private static final char[] EMPTY = {};
   private static final char[] ARRAY1 = {(char) 1};
@@ -89,10 +91,9 @@ public class CharsTest extends TestCase {
   public void testCompare() {
     for (char x : VALUES) {
       for (char y : VALUES) {
-        // note: spec requires only that the sign is the same
         assertWithMessage(x + ", " + y)
-            .that(Chars.compare(x, y))
-            .isEqualTo(Character.valueOf(x).compareTo(y));
+            .that(Math.signum(Chars.compare(x, y)))
+            .isEqualTo(Math.signum(Character.valueOf(x).compareTo(y)));
       }
     }
   }
@@ -324,6 +325,7 @@ public class CharsTest extends TestCase {
     Helpers.testComparator(comparator, ordered);
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testLexicographicalComparatorSerializable() {
     Comparator<char[]> comparator = Chars.lexicographicalComparator();
@@ -618,7 +620,7 @@ public class CharsTest extends TestCase {
   }
 
   public void testToArray_withNull() {
-    List<Character> list = Arrays.asList((char) 0, (char) 1, null);
+    List<@Nullable Character> list = Arrays.asList((char) 0, (char) 1, null);
     try {
       Chars.toArray(list);
       fail();
@@ -626,6 +628,7 @@ public class CharsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible // b/285319375
   public void testAsList_isAView() {
     char[] array = {(char) 0, (char) 1};
     List<Character> list = Chars.asList(array);
@@ -659,6 +662,7 @@ public class CharsTest extends TestCase {
     assertThat(Chars.asList(EMPTY)).isSameInstanceAs(Collections.emptyList());
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNulls() {
     new NullPointerTester().testAllPublicStaticMethods(Chars.class);

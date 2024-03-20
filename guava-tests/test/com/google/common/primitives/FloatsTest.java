@@ -22,6 +22,7 @@ import static java.lang.Float.NaN;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.testing.Helpers;
@@ -33,12 +34,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link Floats}.
  *
  * @author Kevin Bourrillion
  */
+@ElementTypesAreNonnullByDefault
 @GwtCompatible(emulated = true)
 public class FloatsTest extends TestCase {
   private static final float[] EMPTY = {};
@@ -313,6 +316,7 @@ public class FloatsTest extends TestCase {
     Helpers.testComparator(comparator, ordered);
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testLexicographicalComparatorSerializable() {
     Comparator<float[]> comparator = Floats.lexicographicalComparator();
@@ -485,6 +489,7 @@ public class FloatsTest extends TestCase {
         new float[] {-1, 1, Float.NaN, -2, 2}, 1, 4, new float[] {-1, Float.NaN, 1, -2, 2});
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testStringConverterSerialization() {
     SerializableTester.reserializeAndAssert(Floats.stringConverter());
@@ -522,7 +527,7 @@ public class FloatsTest extends TestCase {
   }
 
   public void testToArray_withNull() {
-    List<Float> list = Arrays.asList((float) 0, (float) 1, null);
+    List<@Nullable Float> list = Arrays.asList((float) 0, (float) 1, null);
     try {
       Floats.toArray(list);
       fail();
@@ -548,6 +553,7 @@ public class FloatsTest extends TestCase {
     assertThat(Floats.toArray(doubles)).isEqualTo(array);
   }
 
+  @J2ktIncompatible // b/239034072: Kotlin varargs copy parameter arrays.
   public void testAsList_isAView() {
     float[] array = {(float) 0, (float) 1};
     List<Float> list = Floats.asList(array);
@@ -585,7 +591,7 @@ public class FloatsTest extends TestCase {
    * A reference implementation for {@code tryParse} that just catches the exception from {@link
    * Float#valueOf}.
    */
-  private static Float referenceTryParse(String input) {
+  private static @Nullable Float referenceTryParse(String input) {
     if (input.trim().length() < input.length()) {
       return null;
     }
@@ -644,6 +650,7 @@ public class FloatsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible // hexadecimal floats
   @GwtIncompatible // Floats.tryParse
   public void testTryParseOfToHexStringIsOriginal() {
     for (float f : NUMBERS) {
@@ -690,6 +697,7 @@ public class FloatsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNulls() {
     new NullPointerTester().testAllPublicStaticMethods(Floats.class);
@@ -721,6 +729,7 @@ public class FloatsTest extends TestCase {
     assertThat(Floats.stringConverter().reverse().convert(null)).isNull();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // Float.toString returns different value in GWT.
   public void testStringConverter_reverse() {
     Converter<String, Float> converter = Floats.stringConverter();
@@ -731,6 +740,7 @@ public class FloatsTest extends TestCase {
     assertThat(converter.reverse().convert(1e-6f)).isEqualTo("1.0E-6");
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testStringConverter_nullPointerTester() throws Exception {
     NullPointerTester tester = new NullPointerTester();

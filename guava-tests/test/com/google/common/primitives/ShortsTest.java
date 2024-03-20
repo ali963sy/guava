@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.common.collect.testing.Helpers;
 import com.google.common.testing.NullPointerTester;
@@ -32,14 +33,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link Shorts}.
  *
  * @author Kevin Bourrillion
  */
+@ElementTypesAreNonnullByDefault
 @GwtCompatible(emulated = true)
-@SuppressWarnings("cast") // redundant casts are intentional and harmless
 public class ShortsTest extends TestCase {
   private static final short[] EMPTY = {};
   private static final short[] ARRAY1 = {(short) 1};
@@ -330,6 +332,7 @@ public class ShortsTest extends TestCase {
     Helpers.testComparator(comparator, ordered);
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testLexicographicalComparatorSerializable() {
     Comparator<short[]> comparator = Shorts.lexicographicalComparator();
@@ -493,6 +496,7 @@ public class ShortsTest extends TestCase {
     testSortDescending(new short[] {-1, -2, 1, 2}, 1, 3, new short[] {-1, 1, -2, 2});
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testStringConverterSerialization() {
     SerializableTester.reserializeAndAssert(Shorts.stringConverter());
@@ -530,7 +534,7 @@ public class ShortsTest extends TestCase {
   }
 
   public void testToArray_withNull() {
-    List<Short> list = Arrays.asList((short) 0, (short) 1, null);
+    List<@Nullable Short> list = Arrays.asList((short) 0, (short) 1, null);
     try {
       Shorts.toArray(list);
       fail();
@@ -556,6 +560,7 @@ public class ShortsTest extends TestCase {
     assertThat(Shorts.toArray(doubles)).isEqualTo(array);
   }
 
+  @J2ktIncompatible // b/239034072: Kotlin varargs copy parameter arrays.
   public void testAsList_isAView() {
     short[] array = {(short) 0, (short) 1};
     List<Short> list = Shorts.asList(array);
@@ -589,6 +594,7 @@ public class ShortsTest extends TestCase {
     assertThat(Shorts.asList(EMPTY)).isSameInstanceAs(Collections.emptyList());
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNulls() {
     new NullPointerTester().testAllPublicStaticMethods(Shorts.class);
@@ -630,6 +636,7 @@ public class ShortsTest extends TestCase {
     assertThat(converter.reverse().convert((short) 0666)).isEqualTo("438");
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testStringConverter_nullPointerTester() throws Exception {
     NullPointerTester tester = new NullPointerTester();

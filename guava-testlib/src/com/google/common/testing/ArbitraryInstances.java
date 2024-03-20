@@ -17,8 +17,10 @@
 package com.google.common.testing;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Defaults;
@@ -172,6 +174,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 12.0
  */
 @GwtIncompatible
+@J2ktIncompatible
+@ElementTypesAreNonnullByDefault
 public final class ArbitraryInstances {
 
   private static final Ordering<Field> BY_FIELD_NAME =
@@ -187,7 +191,7 @@ public final class ArbitraryInstances {
    * in Android) requires a successful match in order to generate a {@code MatchResult}:
    * http://goo.gl/5VQFmC
    */
-  private static MatchResult newMatchResult() {
+  private static MatchResult createMatchResult() {
     Matcher matcher = Pattern.compile(".").matcher("X");
     matcher.find();
     return matcher.toMatchResult();
@@ -205,7 +209,7 @@ public final class ArbitraryInstances {
           .put(CharSequence.class, "")
           .put(String.class, "")
           .put(Pattern.class, Pattern.compile(""))
-          .put(MatchResult.class, newMatchResult())
+          .put(MatchResult.class, createMatchResult())
           .put(TimeUnit.class, TimeUnit.SECONDS)
           .put(Charset.class, Charsets.UTF_8)
           .put(Currency.class, Currency.getInstance(Locale.US))
@@ -359,7 +363,7 @@ public final class ArbitraryInstances {
     }
     if (type.isEnum()) {
       T[] enumConstants = type.getEnumConstants();
-      return (enumConstants.length == 0) ? null : enumConstants[0];
+      return (enumConstants == null || enumConstants.length == 0) ? null : enumConstants[0];
     }
     if (type.isArray()) {
       return createEmptyArray(type);
@@ -419,7 +423,8 @@ public final class ArbitraryInstances {
   }
 
   private static <T> T createEmptyArray(Class<T> arrayType) {
-    return arrayType.cast(Array.newInstance(arrayType.getComponentType(), 0));
+    // getComponentType() is non-null because we call createEmptyArray only with an array type.
+    return arrayType.cast(Array.newInstance(requireNonNull(arrayType.getComponentType()), 0));
   }
 
   // Internal implementations of some classes, with public default constructor that get() needs.
@@ -506,11 +511,12 @@ public final class ArbitraryInstances {
   }
 
   // Always equal is a valid total ordering. And it works for any Object.
-  private static final class AlwaysEqual extends Ordering<Object> implements Serializable {
+  private static final class AlwaysEqual extends Ordering<@Nullable Object>
+      implements Serializable {
     private static final AlwaysEqual INSTANCE = new AlwaysEqual();
 
     @Override
-    public int compare(Object o1, Object o2) {
+    public int compare(@Nullable Object o1, @Nullable Object o2) {
       return 0;
     }
 

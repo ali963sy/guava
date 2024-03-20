@@ -21,6 +21,8 @@ import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static com.google.common.collect.ObjectArrays.checkElementsNotNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.DoNotMock;
@@ -34,6 +36,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -169,6 +173,16 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 // TODO(kevinb): I think we should push everything down to "BaseImmutableCollection" or something,
 // just to do everything we can to emphasize the "practically an interface" nature of this class.
 public abstract class ImmutableCollection<E> extends AbstractCollection<E> implements Serializable {
+  /*
+   * We expect SIZED (and SUBSIZED, if applicable) to be added by the spliterator factory methods.
+   * These are properties of the collection as a whole; SIZED and SUBSIZED are more properties of
+   * the spliterator implementation.
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  // @IgnoreJRERequirement is not necessary because this compiles down to a constant.
+  // (which is fortunate because Animal Sniffer doesn't look for @IgnoreJRERequirement on fields)
+  static final int SPLITERATOR_CHARACTERISTICS =
+      Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.ORDERED;
 
   ImmutableCollection() {}
 
@@ -176,9 +190,18 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
   @Override
   public abstract UnmodifiableIterator<E> iterator();
 
+  @Override
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // used only from APIs with Java 8 types in them
+  // (not used within guava-android as of this writing, but we include it in the jar as a test)
+  public Spliterator<E> spliterator() {
+    return Spliterators.spliterator(this, SPLITERATOR_CHARACTERISTICS);
+  }
+
   private static final Object[] EMPTY_ARRAY = {};
 
   @Override
+  @J2ktIncompatible // Incompatible return type change. Use inherited (unoptimized) implementation
   public final Object[] toArray() {
     return toArray(EMPTY_ARRAY);
   }
@@ -358,11 +381,14 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
     return offset;
   }
 
+  @J2ktIncompatible // serialization
+  @GwtIncompatible // serialization
   Object writeReplace() {
     // We serialize by default to ImmutableList, the simplest thing that works.
     return new ImmutableList.SerializedForm(toArray());
   }
 
+  @J2ktIncompatible // serialization
   private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }
@@ -545,4 +571,6 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
       return this;
     }
   }
+
+  private static final long serialVersionUID = 0xdecaf;
 }

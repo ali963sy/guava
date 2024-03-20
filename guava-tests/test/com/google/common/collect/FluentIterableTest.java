@@ -16,7 +16,6 @@
 
 package com.google.common.collect;
 
-import static com.google.common.collect.FluentIterableTest.Help.assertThat;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.Arrays.asList;
@@ -31,8 +30,6 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.testing.IteratorFeature;
 import com.google.common.collect.testing.IteratorTester;
 import com.google.common.testing.NullPointerTester;
-import com.google.common.truth.IterableSubject;
-import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +38,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -61,7 +57,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testFromArrayAndAppend() {
-    FluentIterable<TimeUnit> units =
+    FluentIterable<TimeUnit> unused =
         FluentIterable.from(TimeUnit.values()).append(TimeUnit.SECONDS);
   }
 
@@ -105,7 +101,6 @@ public class FluentIterableTest extends TestCase {
     List<Integer> list1 = newArrayList(1);
     List<Integer> list2 = newArrayList(4);
 
-    @SuppressWarnings("unchecked")
     List<List<Integer>> input = newArrayList(list1, list2);
 
     FluentIterable<Integer> result = FluentIterable.concat(input);
@@ -127,7 +122,6 @@ public class FluentIterableTest extends TestCase {
     List<Integer> list3 = newArrayList(7, 8);
     List<Integer> list4 = newArrayList(9);
     List<Integer> list5 = newArrayList(10);
-    @SuppressWarnings("unchecked")
     FluentIterable<Integer> result = FluentIterable.concat(list1, list2, list3, list4, list5);
     assertEquals(asList(1, 4, 7, 8, 9, 10), newArrayList(result));
     assertEquals("[1, 4, 7, 8, 9, 10]", result.toString());
@@ -931,13 +925,6 @@ public class FluentIterableTest extends TestCase {
     assertThat(FluentIterable.of().stream()).isEmpty();
     assertThat(FluentIterable.of("a").stream()).containsExactly("a");
     assertThat(FluentIterable.of(1, 2, 3).stream().filter(n -> n > 1)).containsExactly(2, 3);
-  }
-
-  // TODO(kevinb): add assertThat(Stream) to Truth?
-  static class Help {
-    static IterableSubject assertThat(Stream<?> stream) {
-      return Truth.assertThat(stream.toArray()).asList();
-    }
   }
 
   private static void assertCanIterateAgain(Iterable<?> iterable) {

@@ -19,6 +19,7 @@ package com.google.common.testing;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.DoNotMock;
 import com.google.j2objc.annotations.J2ObjCIncompatible;
 import java.lang.ref.WeakReference;
@@ -103,7 +104,9 @@ import java.util.concurrent.TimeoutException;
  * @since 11.0
  */
 @GwtIncompatible
+@J2ktIncompatible
 @J2ObjCIncompatible // gc
+@ElementTypesAreNonnullByDefault
 public final class GcFinalization {
   private GcFinalization() {}
 
@@ -132,6 +135,7 @@ public final class GcFinalization {
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
+  @SuppressWarnings("removal") // b/260137033
   public static void awaitDone(Future<?> future) {
     if (future.isDone()) {
       return;
@@ -164,6 +168,7 @@ public final class GcFinalization {
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
+  @SuppressWarnings("removal") // b/260137033
   public static void awaitDone(FinalizationPredicate predicate) {
     if (predicate.isDone()) {
       return;
@@ -192,6 +197,7 @@ public final class GcFinalization {
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
+  @SuppressWarnings("removal") // b/260137033
   public static void await(CountDownLatch latch) {
     if (latch.getCount() == 0) {
       return;
@@ -223,6 +229,7 @@ public final class GcFinalization {
   private static void createUnreachableLatchFinalizer(CountDownLatch latch) {
     Object unused =
         new Object() {
+          @SuppressWarnings("removal") // b/260137033
           @Override
           protected void finalize() {
             latch.countDown();
@@ -294,6 +301,7 @@ public final class GcFinalization {
    * @throws RuntimeException if timed out or interrupted while waiting
    * @since 12.0
    */
+  @SuppressWarnings("removal") // b/260137033
   public static void awaitFullGc() {
     CountDownLatch finalizerRan = new CountDownLatch(1);
     WeakReference<Object> ref =

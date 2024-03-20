@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.NullPointerTester;
 import junit.framework.TestCase;
 
@@ -28,6 +29,7 @@ import junit.framework.TestCase;
  *
  * @author Kevin Bourrillion
  */
+@ElementTypesAreNonnullByDefault
 @GwtCompatible(emulated = true)
 public class StringsTest extends TestCase {
   public void testNullToEmpty() {
@@ -230,6 +232,10 @@ public class StringsTest extends TestCase {
     assertEquals("null [null, null]", Strings.lenientFormat("%s", null, null, null));
     assertEquals("null [5, 6]", Strings.lenientFormat(null, 5, 6));
     assertEquals("null", Strings.lenientFormat("%s", (Object) null));
+  }
+
+  @J2ktIncompatible // TODO(b/319404022): Allow passing null array as varargs
+  public void testLenientFormat_nullArrayVarargs() {
     assertEquals("(Object[])null", Strings.lenientFormat("%s", (Object[]) null));
   }
 
@@ -237,7 +243,8 @@ public class StringsTest extends TestCase {
   public void testLenientFormat_badArgumentToString() {
     assertThat(Strings.lenientFormat("boiler %s plate", new ThrowsOnToString()))
         .matches(
-            "boiler <com\\.google\\.common\\.base\\.StringsTest\\$ThrowsOnToString@[0-9a-f]+ "
+            // J2kt nested class name does not use "$"
+            "boiler <com\\.google\\.common\\.base\\.StringsTest[.$]ThrowsOnToString@[0-9a-f]+ "
                 + "threw java\\.lang\\.UnsupportedOperationException> plate");
   }
 
@@ -253,6 +260,7 @@ public class StringsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointers() {
     NullPointerTester tester = new NullPointerTester();

@@ -16,9 +16,9 @@
 
 package com.google.common.collect;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Objects;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.CheckForNull;
@@ -73,6 +73,7 @@ public abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @
 
   @Override
   @ParametricNullness
+  @CanIgnoreReturnValue
   public V setValue(@ParametricNullness V value) {
     return delegate().setValue(value);
   }
@@ -123,7 +124,6 @@ public abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @
    *
    * @since 7.0
    */
-  @Beta
   protected String standardToString() {
     return getKey() + "=" + getValue();
   }

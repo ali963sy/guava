@@ -19,8 +19,8 @@ import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.j2objc.annotations.J2ObjCIncompatible;
@@ -39,6 +39,7 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Static methods used to implement {@link Futures#getChecked(Future, Class)}. */
+@J2ktIncompatible
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 final class FuturesGetChecked {
@@ -190,6 +191,7 @@ final class FuturesGetChecked {
      */
     static GetCheckedTypeValidator getBestValidator() {
       try {
+        @SuppressWarnings("rawtypes") // class literals
         Class<? extends Enum> theClass =
             Class.forName(CLASS_VALUE_VALIDATOR_NAME).asSubclass(Enum.class);
         return (GetCheckedTypeValidator) theClass.getEnumConstants()[0];
@@ -223,7 +225,7 @@ final class FuturesGetChecked {
     try {
       Exception unused = newWithCause(exceptionClass, new Exception());
       return true;
-    } catch (RuntimeException | Error e) {
+    } catch (Throwable t) { // sneaky checked exception
       return false;
     }
   }
@@ -232,7 +234,7 @@ final class FuturesGetChecked {
     // getConstructors() guarantees this as long as we don't modify the array.
     @SuppressWarnings({"unchecked", "rawtypes"})
     List<Constructor<X>> constructors = (List) Arrays.asList(exceptionClass.getConstructors());
-    for (Constructor<X> constructor : preferringStrings(constructors)) {
+    for (Constructor<X> constructor : preferringStringsThenThrowables(constructors)) {
       X instance = newFromConstructor(constructor, cause);
       if (instance != null) {
         if (instance.getCause() == null) {
@@ -248,21 +250,22 @@ final class FuturesGetChecked {
         cause);
   }
 
-  private static <X extends Exception> List<Constructor<X>> preferringStrings(
+  private static <X extends Exception> List<Constructor<X>> preferringStringsThenThrowables(
       List<Constructor<X>> constructors) {
-    return WITH_STRING_PARAM_FIRST.sortedCopy(constructors);
+    return WITH_STRING_PARAM_THEN_WITH_THROWABLE_PARAM.sortedCopy(constructors);
   }
 
-  private static final Ordering<Constructor<?>> WITH_STRING_PARAM_FIRST =
+  // TODO: b/296487962 - Consider defining a total order over constructors.
+  private static final Ordering<List<Class<?>>> ORDERING_BY_CONSTRUCTOR_PARAMETER_LIST =
       Ordering.natural()
-          .onResultOf(
-              new Function<Constructor<?>, Boolean>() {
-                @Override
-                public Boolean apply(Constructor<?> input) {
-                  return asList(input.getParameterTypes()).contains(String.class);
-                }
-              })
+          .onResultOf((List<Class<?>> params) -> params.contains(String.class))
+          .compound(
+              Ordering.natural()
+                  .onResultOf((List<Class<?>> params) -> params.contains(Throwable.class)))
           .reverse();
+  private static final Ordering<Constructor<?>> WITH_STRING_PARAM_THEN_WITH_THROWABLE_PARAM =
+      ORDERING_BY_CONSTRUCTOR_PARAMETER_LIST.onResultOf(
+          constructor -> asList(constructor.getParameterTypes()));
 
   @CheckForNull
   private static <X> X newFromConstructor(Constructor<X> constructor, Throwable cause) {

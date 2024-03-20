@@ -26,9 +26,11 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Tests for {@link AbstractSequentialIterator}. */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public class AbstractSequentialIteratorTest extends TestCase {
   @GwtIncompatible // Too slow
   public void testDoublerExhaustive() {
@@ -60,7 +62,7 @@ public class AbstractSequentialIteratorTest extends TestCase {
             Iterator<Integer> powersOfTwo =
                 new AbstractSequentialIterator<Integer>(1) {
                   @Override
-                  protected Integer computeNext(Integer previous) {
+                  protected @Nullable Integer computeNext(Integer previous) {
                     return (previous == 1 << 30) ? null : previous * 2;
                   }
                 };
@@ -103,8 +105,9 @@ public class AbstractSequentialIteratorTest extends TestCase {
         .inOrder();
   }
 
+  @SuppressWarnings("DoNotCall")
   public void testEmpty() {
-    Iterator<Object> empty = newEmpty();
+    Iterator<Object> empty = new EmptyAbstractSequentialIterator<>();
     assertFalse(empty.hasNext());
     try {
       empty.next();
@@ -119,7 +122,7 @@ public class AbstractSequentialIteratorTest extends TestCase {
   }
 
   public void testBroken() {
-    Iterator<Object> broken = newBroken();
+    Iterator<Object> broken = new BrokenAbstractSequentialIterator();
     assertTrue(broken.hasNext());
     // We can't retrieve even the known first element:
     try {
@@ -137,28 +140,34 @@ public class AbstractSequentialIteratorTest extends TestCase {
   private static Iterator<Integer> newDoubler(int first, final int last) {
     return new AbstractSequentialIterator<Integer>(first) {
       @Override
-      protected Integer computeNext(Integer previous) {
+      protected @Nullable Integer computeNext(Integer previous) {
         return (previous == last) ? null : previous * 2;
       }
     };
   }
 
-  private static <T> Iterator<T> newEmpty() {
-    return new AbstractSequentialIterator<T>(null) {
-      @Override
-      protected T computeNext(T previous) {
-        throw new AssertionFailedError();
-      }
-    };
+  private static class EmptyAbstractSequentialIterator<T> extends AbstractSequentialIterator<T> {
+
+    public EmptyAbstractSequentialIterator() {
+      super(null);
+    }
+
+    @Override
+    protected T computeNext(T previous) {
+      throw new AssertionFailedError();
+    }
   }
 
-  private static Iterator<Object> newBroken() {
-    return new AbstractSequentialIterator<Object>("UNUSED") {
-      @Override
-      protected Object computeNext(Object previous) {
-        throw new MyException();
-      }
-    };
+  private static class BrokenAbstractSequentialIterator extends AbstractSequentialIterator<Object> {
+
+    public BrokenAbstractSequentialIterator() {
+      super("UNUSED");
+    }
+
+    @Override
+    protected Object computeNext(Object previous) {
+      throw new MyException();
+    }
   }
 
   private static class MyException extends RuntimeException {}

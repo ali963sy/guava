@@ -18,6 +18,7 @@ package com.google.common.base;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.testing.ClassSanityTester;
@@ -27,6 +28,7 @@ import com.google.common.testing.SerializableTester;
 import java.io.Serializable;
 import java.util.Map;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Tests for {@link Functions}.
@@ -35,10 +37,11 @@ import junit.framework.TestCase;
  * @author Vlad Patryshev
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public class FunctionsTest extends TestCase {
 
   public void testIdentity_same() {
-    Function<String, String> identity = Functions.identity();
+    Function<@Nullable String, @Nullable String> identity = Functions.identity();
     assertNull(identity.apply(null));
     assertSame("foo", identity.apply("foo"));
   }
@@ -48,6 +51,7 @@ public class FunctionsTest extends TestCase {
     assertNotSame(new Long(135135L), identity.apply(new Long(135135L)));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testIdentitySerializable() {
     checkCanReserializeSingleton(Functions.identity());
@@ -73,11 +77,13 @@ public class FunctionsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testToStringFunctionSerializable() {
     checkCanReserializeSingleton(Functions.toStringFunction());
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointerExceptions() {
     NullPointerTester tester = new NullPointerTester();
@@ -85,11 +91,11 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testForMapWithoutDefault() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, @Nullable Integer> map = Maps.newHashMap();
     map.put("One", 1);
     map.put("Three", 3);
     map.put("Null", null);
-    Function<String, Integer> function = Functions.forMap(map);
+    Function<String, @Nullable Integer> function = Functions.forMap(map);
 
     assertEquals(1, function.apply("One").intValue());
     assertEquals(3, function.apply("Three").intValue());
@@ -107,17 +113,18 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForMapWithoutDefaultSerializable() {
     checkCanReserialize(Functions.forMap(ImmutableMap.of(1, 2)));
   }
 
   public void testForMapWithDefault() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, @Nullable Integer> map = Maps.newHashMap();
     map.put("One", 1);
     map.put("Three", 3);
     map.put("Null", null);
-    Function<String, Integer> function = Functions.forMap(map, 42);
+    Function<String, @Nullable Integer> function = Functions.forMap(map, 42);
 
     assertEquals(1, function.apply("One").intValue());
     assertEquals(42, function.apply("Two").intValue());
@@ -132,6 +139,7 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForMapWithDefault_includeSerializable() {
     Map<String, Integer> map = Maps.newHashMap();
@@ -152,6 +160,7 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForMapWithDefaultSerializable() {
     checkCanReserialize(Functions.forMap(ImmutableMap.of(1, 2), 3));
@@ -159,7 +168,7 @@ public class FunctionsTest extends TestCase {
 
   public void testForMapWithDefault_null() {
     ImmutableMap<String, Integer> map = ImmutableMap.of("One", 1);
-    Function<String, Integer> function = Functions.forMap(map, null);
+    Function<String, @Nullable Integer> function = Functions.forMap(map, null);
 
     assertEquals((Integer) 1, function.apply("One"));
     assertNull(function.apply("Two"));
@@ -171,6 +180,7 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForMapWithDefault_null_compareWithSerializable() {
     ImmutableMap<String, Integer> map = ImmutableMap.of("One", 1);
@@ -235,6 +245,7 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testComposition_includeReserializabled() {
     Map<String, Integer> mJapaneseToInteger = Maps.newHashMap();
@@ -273,9 +284,9 @@ public class FunctionsTest extends TestCase {
         Functions.compose(numberToSpanish, japaneseToInteger);
   }
 
-  private static class HashCodeFunction implements Function<Object, Integer> {
+  private static class HashCodeFunction implements Function<@Nullable Object, Integer> {
     @Override
-    public Integer apply(Object o) {
+    public Integer apply(@Nullable Object o) {
       return (o == null) ? 0 : o.hashCode();
     }
   }
@@ -332,17 +343,18 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForPredicateSerializable() {
     checkCanReserialize(Functions.forPredicate(Predicates.equalTo(5)));
   }
 
   public void testConstant() {
-    Function<Object, Object> f = Functions.<Object>constant("correct");
+    Function<@Nullable Object, Object> f = Functions.<Object>constant("correct");
     assertEquals("correct", f.apply(new Object()));
     assertEquals("correct", f.apply(null));
 
-    Function<Object, String> g = Functions.constant(null);
+    Function<@Nullable Object, @Nullable String> g = Functions.constant(null);
     assertEquals(null, g.apply(2));
     assertEquals(null, g.apply(null));
 
@@ -354,13 +366,14 @@ public class FunctionsTest extends TestCase {
         .testEquals();
 
     new EqualsTester()
-        .addEqualityGroup(g, Functions.constant(null))
+        .addEqualityGroup(g, Functions.<@Nullable Object>constant(null))
         .addEqualityGroup(Functions.constant("incorrect"))
         .addEqualityGroup(Functions.toStringFunction())
         .addEqualityGroup(f)
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testConstantSerializable() {
     checkCanReserialize(Functions.constant(5));
@@ -378,7 +391,7 @@ public class FunctionsTest extends TestCase {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof CountingSupplier) {
         return this.value == ((CountingSupplier) obj).value;
       }
@@ -393,7 +406,7 @@ public class FunctionsTest extends TestCase {
 
   public void testForSupplier() {
     Supplier<Integer> supplier = new CountingSupplier();
-    Function<Object, Integer> function = Functions.forSupplier(supplier);
+    Function<@Nullable Object, Integer> function = Functions.forSupplier(supplier);
 
     assertEquals(1, (int) function.apply(null));
     assertEquals(2, (int) function.apply("foo"));
@@ -406,16 +419,19 @@ public class FunctionsTest extends TestCase {
         .testEquals();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForSupplierSerializable() {
     checkCanReserialize(Functions.forSupplier(new CountingSupplier()));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // reflection
   public void testNulls() throws Exception {
     new ClassSanityTester().forAllPublicStaticMethods(Functions.class).testNulls();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // reflection
   @AndroidIncompatible // TODO(cpovirk): ClassNotFoundException: com.google.common.base.Function
   // (I suspect that this and the other similar failures happen with ArbitraryInstances proxies.)
@@ -423,6 +439,7 @@ public class FunctionsTest extends TestCase {
     new ClassSanityTester().forAllPublicStaticMethods(Functions.class).testEqualsAndSerializable();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   private static <Y> void checkCanReserialize(Function<? super Integer, Y> f) {
     Function<? super Integer, Y> g = SerializableTester.reserializeAndAssert(f);
@@ -443,6 +460,7 @@ public class FunctionsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   private static <Y> void checkCanReserializeSingleton(Function<? super String, Y> f) {
     Function<? super String, Y> g = SerializableTester.reserializeAndAssert(f);

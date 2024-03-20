@@ -19,6 +19,7 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import java.io.Serializable;
 import java.util.Arrays;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A class that implements {@code Comparable} without generics, such as those found in libraries
@@ -27,8 +28,9 @@ import java.util.Arrays;
  *
  * @author Kevin Bourrillion
  */
-@SuppressWarnings("ComparableType")
+@SuppressWarnings({"ComparableType", "rawtypes"}) // https://github.com/google/guava/issues/989
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 class LegacyComparable implements Comparable, Serializable {
   static final LegacyComparable X = new LegacyComparable("x");
   static final LegacyComparable Y = new LegacyComparable("y");
@@ -51,7 +53,7 @@ class LegacyComparable implements Comparable, Serializable {
   }
 
   @Override
-  public boolean equals(Object object) {
+  public boolean equals(@Nullable Object object) {
     if (object instanceof LegacyComparable) {
       LegacyComparable that = (LegacyComparable) object;
       return this.value.equals(that.value);

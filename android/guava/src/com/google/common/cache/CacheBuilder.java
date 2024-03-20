@@ -48,10 +48,10 @@ import javax.annotation.CheckForNull;
  *
  * <p>The successor to Guava's caching API is <a
  * href="https://github.com/ben-manes/caffeine/wiki">Caffeine</a>. Its API is designed to make it a
- * nearly drop-in replacement -- though it requires Java 8 APIs, is not available for Android or
- * GWT/j2cl, and may have <a href="https://github.com/ben-manes/caffeine/wiki/Guava">different
- * (usually better) behavior</a> when multiple threads attempt concurrent mutations. Its equivalent
- * to {@code CacheBuilder} is its <a
+ * nearly drop-in replacement. It requires Java 8+, and is not available for Android or GWT/J2CL,
+ * and may have <a href="https://github.com/ben-manes/caffeine/wiki/Guava">different (usually
+ * better) behavior</a> when multiple threads attempt concurrent mutations. Its equivalent to {@code
+ * CacheBuilder} is its <a
  * href="https://www.javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/latest/com.github.benmanes.caffeine/com/github/benmanes/caffeine/cache/Caffeine.html">{@code
  * Caffeine}</a> class. Caffeine offers better performance, more features (including asynchronous
  * loading), and fewer <a
@@ -228,15 +228,24 @@ public final class CacheBuilder<K, V> {
   static final CacheStats EMPTY_STATS = new CacheStats(0, 0, 0, 0, 0, 0);
 
   /*
-   * We avoid using a method reference here for now: Inside Google, CacheBuilder is used from the
-   * implementation of a custom ClassLoader that is sometimes used as a system classloader. That's a
-   * problem because method-reference linking tries to look up the system classloader, and it fails
-   * because there isn't one yet.
+   * We avoid using a method reference or lambda here for now:
    *
-   * I would have guessed that a lambda would produce the same problem, but maybe it's safe because
-   * the lambda implementation is generated as a method in the _same class_ as the usage?
+   * - method reference: Inside Google, CacheBuilder is used from the implementation of a custom
+   *   ClassLoader that is sometimes used as a system classloader. That's a problem because
+   *   method-reference linking tries to look up the system classloader, and it fails because there
+   *   isn't one yet.
+   *
+   * - lambda: Outside Google, we got a report of a similar problem in
+   *   https://github.com/google/guava/issues/6565
    */
-  static final Supplier<StatsCounter> CACHE_STATS_COUNTER = () -> new SimpleStatsCounter();
+  @SuppressWarnings("AnonymousToLambda")
+  static final Supplier<StatsCounter> CACHE_STATS_COUNTER =
+      new Supplier<StatsCounter>() {
+        @Override
+        public StatsCounter get() {
+          return new SimpleStatsCounter();
+        }
+      };
 
   enum NullListener implements RemovalListener<Object, Object> {
     INSTANCE;
@@ -262,7 +271,10 @@ public final class CacheBuilder<K, V> {
         }
       };
 
-  private static final Logger logger = Logger.getLogger(CacheBuilder.class.getName());
+  // We use a holder class to delay initialization: https://github.com/google/guava/issues/6566
+  private static final class LoggerHolder {
+    static final Logger logger = Logger.getLogger(CacheBuilder.class.getName());
+  }
 
   static final int UNSET_INT = -1;
 
@@ -556,8 +568,8 @@ public final class CacheBuilder<K, V> {
    *
    * @param weigher the weigher to use in calculating the weight of cache entries
    * @return this {@code CacheBuilder} instance (for chaining)
-   * @throws IllegalArgumentException if {@code size} is negative
-   * @throws IllegalStateException if a maximum size was already set
+   * @throws IllegalStateException if a weigher was already set or {@link #maximumSize(long)} was
+   *     previously called
    * @since 11.0
    */
   @GwtIncompatible // To be supported
@@ -941,7 +953,8 @@ public final class CacheBuilder<K, V> {
         checkState(maximumWeight != UNSET_INT, "weigher requires maximumWeight");
       } else {
         if (maximumWeight == UNSET_INT) {
-          logger.log(Level.WARNING, "ignoring weigher specified without maximumWeight");
+          LoggerHolder.logger.log(
+              Level.WARNING, "ignoring weigher specified without maximumWeight");
         }
       }
     }

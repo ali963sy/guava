@@ -16,13 +16,12 @@
 
 package com.google.common.collect;
 
-import static com.google.common.collect.MapsTest.CORRECT_LENGTH;
-
 import com.google.common.annotations.GwtCompatible;
 import java.util.SortedMap;
 
 @GwtCompatible
-public class FilteredSortedMapTest extends FilteredMapTest {
+@ElementTypesAreNonnullByDefault
+public class FilteredSortedMapTest extends AbstractFilteredMapTest {
   @Override
   SortedMap<String, Integer> createUnfiltered() {
     return Maps.newTreeMap();

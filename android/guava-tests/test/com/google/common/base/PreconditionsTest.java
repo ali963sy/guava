@@ -17,9 +17,11 @@
 package com.google.common.base;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link Preconditions}.
@@ -38,6 +41,7 @@ import junit.framework.TestCase;
  * @author Kevin Bourrillion
  * @author Jared Levy
  */
+@ElementTypesAreNonnullByDefault
 @SuppressWarnings("LenientFormatStringValidation") // Intentional for testing
 @GwtCompatible(emulated = true)
 public class PreconditionsTest extends TestCase {
@@ -120,6 +124,7 @@ public class PreconditionsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible // TODO(b/319404022): Allow passing null array as varargs
   public void testCheckArgument_singleNullArray_failure() {
     try {
       Preconditions.checkArgument(false, "A %s C", (Object[]) null);
@@ -385,6 +390,7 @@ public class PreconditionsTest extends TestCase {
   }
 
   @GwtIncompatible("Reflection")
+  @J2ktIncompatible
   public void testAllOverloads_checkArgument() throws Exception {
     for (ImmutableList<Class<?>> sig : allSignatures(boolean.class)) {
       Method checkArgumentMethod =
@@ -392,16 +398,16 @@ public class PreconditionsTest extends TestCase {
       checkArgumentMethod.invoke(null /* static method */, getParametersForSignature(true, sig));
 
       Object[] failingParams = getParametersForSignature(false, sig);
-      try {
-        checkArgumentMethod.invoke(null /* static method */, failingParams);
-        fail();
-      } catch (InvocationTargetException ite) {
-        assertFailureCause(ite.getCause(), IllegalArgumentException.class, failingParams);
-      }
+      InvocationTargetException ite =
+          assertThrows(
+              InvocationTargetException.class,
+              () -> checkArgumentMethod.invoke(null /* static method */, failingParams));
+      assertFailureCause(ite.getCause(), IllegalArgumentException.class, failingParams);
     }
   }
 
   @GwtIncompatible("Reflection")
+  @J2ktIncompatible
   public void testAllOverloads_checkState() throws Exception {
     for (ImmutableList<Class<?>> sig : allSignatures(boolean.class)) {
       Method checkArgumentMethod =
@@ -409,16 +415,16 @@ public class PreconditionsTest extends TestCase {
       checkArgumentMethod.invoke(null /* static method */, getParametersForSignature(true, sig));
 
       Object[] failingParams = getParametersForSignature(false, sig);
-      try {
-        checkArgumentMethod.invoke(null /* static method */, failingParams);
-        fail();
-      } catch (InvocationTargetException ite) {
-        assertFailureCause(ite.getCause(), IllegalStateException.class, failingParams);
-      }
+      InvocationTargetException ite =
+          assertThrows(
+              InvocationTargetException.class,
+              () -> checkArgumentMethod.invoke(null /* static method */, failingParams));
+      assertFailureCause(ite.getCause(), IllegalStateException.class, failingParams);
     }
   }
 
   @GwtIncompatible("Reflection")
+  @J2ktIncompatible
   public void testAllOverloads_checkNotNull() throws Exception {
     for (ImmutableList<Class<?>> sig : allSignatures(Object.class)) {
       Method checkArgumentMethod =
@@ -427,12 +433,11 @@ public class PreconditionsTest extends TestCase {
           null /* static method */, getParametersForSignature(new Object(), sig));
 
       Object[] failingParams = getParametersForSignature(null, sig);
-      try {
-        checkArgumentMethod.invoke(null /* static method */, failingParams);
-        fail();
-      } catch (InvocationTargetException ite) {
-        assertFailureCause(ite.getCause(), NullPointerException.class, failingParams);
-      }
+      InvocationTargetException ite =
+          assertThrows(
+              InvocationTargetException.class,
+              () -> checkArgumentMethod.invoke(null /* static method */, failingParams));
+      assertFailureCause(ite.getCause(), NullPointerException.class, failingParams);
     }
   }
 
@@ -462,7 +467,9 @@ public class PreconditionsTest extends TestCase {
    * @param sig The method signature
    */
   @GwtIncompatible("ArbitraryInstances")
-  private Object[] getParametersForSignature(Object firstParam, ImmutableList<Class<?>> sig) {
+  @J2ktIncompatible
+  private Object[] getParametersForSignature(
+      @Nullable Object firstParam, ImmutableList<Class<?>> sig) {
     Object[] params = new Object[sig.size()];
     params[0] = firstParam;
     if (params.length > 1) {
@@ -537,6 +544,7 @@ public class PreconditionsTest extends TestCase {
     Preconditions.checkState(boxedBoolean.booleanValue(), "", s);
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointers() {
     /*

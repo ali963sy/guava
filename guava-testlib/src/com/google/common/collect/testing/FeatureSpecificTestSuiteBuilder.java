@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Creates, based on your criteria, a JUnit test suite that exhaustively tests the object generated
@@ -62,7 +63,7 @@ public abstract class FeatureSpecificTestSuiteBuilder<
 
   // Test Data
 
-  private G subjectGenerator;
+  private @Nullable G subjectGenerator;
   // Gets run before every test.
   private Runnable setUp;
   // Gets run at the conclusion of every test.
@@ -125,7 +126,7 @@ public abstract class FeatureSpecificTestSuiteBuilder<
 
   // Name
 
-  private String name;
+  private @Nullable String name;
 
   /** Configures this builder produce a TestSuite with the given name. */
   @CanIgnoreReturnValue
@@ -173,12 +174,6 @@ public abstract class FeatureSpecificTestSuiteBuilder<
       Logger.getLogger(FeatureSpecificTestSuiteBuilder.class.getName());
 
   /** Creates a runnable JUnit test suite based on the criteria already given. */
-  /*
-   * Class parameters must be raw. This annotation should go on testerClass in
-   * the for loop, but the 1.5 javac crashes on annotations in for loops:
-   * <http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6294589>
-   */
-  @SuppressWarnings("unchecked")
   public TestSuite createTestSuite() {
     checkCanCreate();
 
@@ -189,11 +184,13 @@ public abstract class FeatureSpecificTestSuiteBuilder<
 
     logger.fine("Expanded: " + formatFeatureSet(features));
 
-    // Class parameters must be raw.
+    @SuppressWarnings("rawtypes") // class literals
     List<Class<? extends AbstractTester>> testers = getTesters();
 
     TestSuite suite = new TestSuite(name);
-    for (Class<? extends AbstractTester> testerClass : testers) {
+    for (@SuppressWarnings("rawtypes") // class literals
+    Class<? extends AbstractTester> testerClass : testers) {
+      @SuppressWarnings("unchecked") // getting rid of the raw type, for better or for worse
       TestSuite testerSuite =
           makeSuiteForTesterClass((Class<? extends AbstractTester<?>>) testerClass);
       if (testerSuite.countTestCases() > 0) {
@@ -216,7 +213,7 @@ public abstract class FeatureSpecificTestSuiteBuilder<
     }
   }
 
-  // Class parameters must be raw.
+  @SuppressWarnings("rawtypes") // class literals
   protected abstract List<Class<? extends AbstractTester>> getTesters();
 
   private boolean matches(Test test) {

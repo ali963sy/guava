@@ -20,7 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Test cases for {@link Tables#transformValues}.
@@ -28,18 +30,19 @@ import com.google.common.base.Function;
  * @author Jared Levy
  */
 @GwtCompatible(emulated = true)
-public class TablesTransformValuesTest extends AbstractTableTest {
+@ElementTypesAreNonnullByDefault
+public class TablesTransformValuesTest extends AbstractTableTest<Character> {
 
-  private static final Function<String, Character> FIRST_CHARACTER =
-      new Function<String, Character>() {
+  private static final Function<@Nullable String, @Nullable Character> FIRST_CHARACTER =
+      new Function<@Nullable String, @Nullable Character>() {
         @Override
-        public Character apply(String input) {
+        public @Nullable Character apply(@Nullable String input) {
           return input == null ? null : input.charAt(0);
         }
       };
 
   @Override
-  protected Table<String, Integer, Character> create(Object... data) {
+  protected Table<String, Integer, Character> create(@Nullable Object... data) {
     Table<String, Integer, String> table = HashBasedTable.create();
     checkArgument(data.length % 3 == 0);
     for (int i = 0; i < data.length; i += 3) {
@@ -50,6 +53,7 @@ public class TablesTransformValuesTest extends AbstractTableTest {
   }
 
   // Null support depends on the underlying table and function.
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   @Override
   public void testNullPointerInstance() {}

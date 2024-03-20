@@ -18,8 +18,10 @@ package com.google.common.testing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.throwIfUnchecked;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Equivalence;
@@ -122,6 +124,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -130,6 +133,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Ben Yu
  */
 @GwtIncompatible
+@J2ktIncompatible
 class FreshValueGenerator {
 
   private static final ImmutableMap<Class<?>, Method> GENERATORS;
@@ -201,7 +205,7 @@ class FreshValueGenerator {
    * Generates an instance for {@code type} using the current {@link #freshness}. The generated
    * instance may or may not be unique across different calls.
    */
-  private Object generate(TypeToken<?> type) {
+  private @Nullable Object generate(TypeToken<?> type) {
     Class<?> rawType = type.getRawType();
     List<Object> samples = sampleInstances.get(rawType);
     Object sample = pickInstance(samples, null);
@@ -212,7 +216,7 @@ class FreshValueGenerator {
       return pickInstance(rawType.getEnumConstants(), null);
     }
     if (type.isArray()) {
-      TypeToken<?> componentType = type.getComponentType();
+      TypeToken<?> componentType = requireNonNull(type.getComponentType());
       Object array = Array.newInstance(componentType.getRawType(), 1);
       Array.set(array, 0, generate(componentType));
       return array;
@@ -258,7 +262,7 @@ class FreshValueGenerator {
     return defaultGenerate(rawType);
   }
 
-  private <T> T defaultGenerate(Class<T> rawType) {
+  private <T> @Nullable T defaultGenerate(Class<T> rawType) {
     if (rawType.isInterface()) {
       // always create a new proxy
       return newProxy(rawType);
@@ -291,7 +295,8 @@ class FreshValueGenerator {
     }
 
     @Override
-    protected Object handleInvocation(Object proxy, Method method, Object[] args) {
+    @CheckForNull
+    protected Object handleInvocation(Object proxy, Method method, @Nullable Object[] args) {
       return interfaceMethodCalled(interfaceType, method);
     }
 
@@ -316,6 +321,7 @@ class FreshValueGenerator {
   }
 
   /** Subclasses can override to provide different return value for proxied interface methods. */
+  @CheckForNull
   Object interfaceMethodCalled(Class<?> interfaceType, Method method) {
     throw new UnsupportedOperationException();
   }
@@ -378,6 +384,7 @@ class FreshValueGenerator {
     return freshness.get();
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Integer generateInteger() {
     return new Integer(generateInt());
@@ -388,6 +395,7 @@ class FreshValueGenerator {
     return generateInt();
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Long generateLongObject() {
     return new Long(generateLong());
@@ -398,6 +406,7 @@ class FreshValueGenerator {
     return generateInt();
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Float generateFloatObject() {
     return new Float(generateFloat());
@@ -408,6 +417,7 @@ class FreshValueGenerator {
     return generateInt();
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Double generateDoubleObject() {
     return new Double(generateDouble());
@@ -418,6 +428,7 @@ class FreshValueGenerator {
     return (short) generateInt();
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Short generateShortObject() {
     return new Short(generateShort());
@@ -428,6 +439,7 @@ class FreshValueGenerator {
     return (byte) generateInt();
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Byte generateByteObject() {
     return new Byte(generateByte());
@@ -438,6 +450,7 @@ class FreshValueGenerator {
     return generateString().charAt(0);
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Character generateCharacter() {
     return new Character(generateChar());
@@ -448,6 +461,7 @@ class FreshValueGenerator {
     return generateInt() % 2 == 0;
   }
 
+  @SuppressWarnings("removal") // b/321209431 -- maybe just use valueOf here?
   @Generates
   Boolean generateBooleanObject() {
     return new Boolean(generateBoolean());
@@ -647,7 +661,7 @@ class FreshValueGenerator {
   }
 
   @Generates
-  <T> Ordering<T> generateOrdering() {
+  <T extends @Nullable Object> Ordering<T> generateOrdering() {
     return new Ordering<T>() {
       @Override
       public int compare(T left, T right) {
@@ -930,14 +944,12 @@ class FreshValueGenerator {
   }
 
   @Generates
-  static <R, C, V> Table<R, C, V> generateTable(
-      @Nullable R row, @Nullable C column, @Nullable V value) {
+  static <R, C, V> Table<R, C, V> generateTable(R row, C column, V value) {
     return generateHashBasedTable(row, column, value);
   }
 
   @Generates
-  static <R, C, V> HashBasedTable<R, C, V> generateHashBasedTable(
-      @Nullable R row, @Nullable C column, @Nullable V value) {
+  static <R, C, V> HashBasedTable<R, C, V> generateHashBasedTable(R row, C column, V value) {
     HashBasedTable<R, C, V> table = HashBasedTable.create();
     table.put(row, column, value);
     return table;

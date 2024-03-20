@@ -17,7 +17,10 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.primitives.Ints;
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.Collection;
 import java.util.Map;
 import javax.annotation.CheckForNull;
@@ -37,7 +40,7 @@ final class JdkBackedImmutableMultiset<E> extends ImmutableMultiset<E> {
 
   static <E> ImmutableMultiset<E> create(Collection<? extends Entry<? extends E>> entries) {
     @SuppressWarnings("unchecked")
-    Entry<E>[] entriesArray = entries.toArray(new Entry[0]);
+    Entry<E>[] entriesArray = entries.toArray((Entry<E>[]) new Entry<?>[0]);
     Map<E, Integer> delegateMap = Maps.newHashMapWithExpectedSize(entriesArray.length);
     long size = 0;
     for (int i = 0; i < entriesArray.length; i++) {
@@ -66,7 +69,7 @@ final class JdkBackedImmutableMultiset<E> extends ImmutableMultiset<E> {
     return delegateMap.getOrDefault(element, 0);
   }
 
-  @CheckForNull private transient ImmutableSet<E> elementSet;
+  @LazyInit @CheckForNull private transient ImmutableSet<E> elementSet;
 
   @Override
   public ImmutableSet<E> elementSet() {
@@ -87,5 +90,14 @@ final class JdkBackedImmutableMultiset<E> extends ImmutableMultiset<E> {
   @Override
   public int size() {
     return Ints.saturatedCast(size);
+  }
+
+  // redeclare to help optimizers with b/310253115
+  @SuppressWarnings("RedundantOverride")
+  @Override
+  @J2ktIncompatible // serialization
+  @GwtIncompatible // serialization
+  Object writeReplace() {
+    return super.writeReplace();
   }
 }

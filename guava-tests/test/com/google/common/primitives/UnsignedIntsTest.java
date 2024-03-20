@@ -18,6 +18,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.testing.Helpers;
 import com.google.common.testing.NullPointerTester;
 import java.util.Arrays;
@@ -305,16 +306,25 @@ public class UnsignedIntsTest extends TestCase {
   public void testParseIntThrowsExceptionForInvalidRadix() {
     // Valid radix values are Character.MIN_RADIX to Character.MAX_RADIX,
     // inclusive.
+    //
+    // Note: According to the spec, a NumberFormatException is thrown for a number that is not
+    // parseable, but the spec doesn't seem to say which exception is thrown for an invalid radix.
+    // In contrast to the JVM, Kotlin native throws an Illegal argument exception in this case
+    // (which seems to make more sense).
     try {
       UnsignedInts.parseUnsignedInt("0", Character.MIN_RADIX - 1);
       fail();
     } catch (NumberFormatException expected) {
+    } catch (IllegalArgumentException expected) {
+      // Kotlin native, see above
     }
 
     try {
       UnsignedInts.parseUnsignedInt("0", Character.MAX_RADIX + 1);
       fail();
     } catch (NumberFormatException expected) {
+    } catch (IllegalArgumentException expected) {
+      // Kotlin native, see above
     }
 
     // The radix is used as an array index, so try a negative value.
@@ -322,6 +332,8 @@ public class UnsignedIntsTest extends TestCase {
       UnsignedInts.parseUnsignedInt("0", -1);
       fail();
     } catch (NumberFormatException expected) {
+    } catch (IllegalArgumentException expected) {
+      // Kotlin native, see above
     }
   }
 
@@ -384,6 +396,7 @@ public class UnsignedIntsTest extends TestCase {
     return UnsignedInts.join(",", values);
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNulls() {
     new NullPointerTester().testAllPublicStaticMethods(UnsignedInts.class);

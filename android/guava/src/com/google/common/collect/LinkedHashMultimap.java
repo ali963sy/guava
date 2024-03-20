@@ -22,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -188,11 +189,11 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
      * frameworks like Android that define post-construct hooks like Activity.onCreate, etc.
      */
 
-    @CheckForNull ValueSetLink<K, V> predecessorInValueSet;
-    @CheckForNull ValueSetLink<K, V> successorInValueSet;
+    @CheckForNull private ValueSetLink<K, V> predecessorInValueSet;
+    @CheckForNull private ValueSetLink<K, V> successorInValueSet;
 
-    @CheckForNull ValueEntry<K, V> predecessorInMultimap;
-    @CheckForNull ValueEntry<K, V> successorInMultimap;
+    @CheckForNull private ValueEntry<K, V> predecessorInMultimap;
+    @CheckForNull private ValueEntry<K, V> successorInMultimap;
 
     ValueEntry(
         @ParametricNullness K key,
@@ -490,7 +491,8 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     private void rehashIfNecessary() {
       if (Hashing.needsResizing(size, hashTable.length, VALUE_SET_LOAD_FACTOR)) {
         @SuppressWarnings("unchecked")
-        ValueEntry<K, V>[] hashTable = new ValueEntry[this.hashTable.length * 2];
+        ValueEntry<K, V>[] hashTable =
+            (ValueEntry<K, V>[]) new ValueEntry<?, ?>[this.hashTable.length * 2];
         this.hashTable = hashTable;
         int mask = hashTable.length - 1;
         for (ValueSetLink<K, V> entry = firstEntry;
@@ -592,6 +594,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
    *     and the entries in order
    */
   @GwtIncompatible // java.io.ObjectOutputStream
+  @J2ktIncompatible
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     stream.writeInt(keySet().size());
@@ -606,6 +609,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
   }
 
   @GwtIncompatible // java.io.ObjectInputStream
+  @J2ktIncompatible
   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
     multimapHeaderEntry = ValueEntry.newHeader();
@@ -634,5 +638,6 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
   }
 
   @GwtIncompatible // java serialization not supported
+  @J2ktIncompatible
   private static final long serialVersionUID = 1;
 }

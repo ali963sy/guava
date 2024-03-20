@@ -18,6 +18,7 @@ package com.google.common.base;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -33,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@link Joiner}.
@@ -40,6 +42,7 @@ import junit.framework.TestCase;
  * @author Kevin Bourrillion
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public class JoinerTest extends TestCase {
   private static final Joiner J = Joiner.on("-");
 
@@ -48,12 +51,13 @@ public class JoinerTest extends TestCase {
   private static final Iterable<Integer> ITERABLE_1 = Arrays.asList(1);
   private static final Iterable<Integer> ITERABLE_12 = Arrays.asList(1, 2);
   private static final Iterable<Integer> ITERABLE_123 = Arrays.asList(1, 2, 3);
-  private static final Iterable<Integer> ITERABLE_NULL = Arrays.asList((Integer) null);
-  private static final Iterable<Integer> ITERABLE_NULL_NULL = Arrays.asList((Integer) null, null);
-  private static final Iterable<Integer> ITERABLE_NULL_1 = Arrays.asList(null, 1);
-  private static final Iterable<Integer> ITERABLE_1_NULL = Arrays.asList(1, null);
-  private static final Iterable<Integer> ITERABLE_1_NULL_2 = Arrays.asList(1, null, 2);
-  private static final Iterable<Integer> ITERABLE_FOUR_NULLS =
+  private static final Iterable<@Nullable Integer> ITERABLE_NULL = Arrays.asList((Integer) null);
+  private static final Iterable<@Nullable Integer> ITERABLE_NULL_NULL =
+      Arrays.asList((Integer) null, null);
+  private static final Iterable<@Nullable Integer> ITERABLE_NULL_1 = Arrays.asList(null, 1);
+  private static final Iterable<@Nullable Integer> ITERABLE_1_NULL = Arrays.asList(1, null);
+  private static final Iterable<@Nullable Integer> ITERABLE_1_NULL_2 = Arrays.asList(1, null, 2);
+  private static final Iterable<@Nullable Integer> ITERABLE_FOUR_NULLS =
       Arrays.asList((Integer) null, null, null, null);
 
   public void testNoSpecialNullBehavior() {
@@ -162,12 +166,13 @@ public class JoinerTest extends TestCase {
   private static final Appendable NASTY_APPENDABLE =
       new Appendable() {
         @Override
-        public Appendable append(CharSequence csq) throws IOException {
+        public Appendable append(@Nullable CharSequence csq) throws IOException {
           throw new IOException();
         }
 
         @Override
-        public Appendable append(CharSequence csq, int start, int end) throws IOException {
+        public Appendable append(@Nullable CharSequence csq, int start, int end)
+            throws IOException {
           throw new IOException();
         }
 
@@ -243,7 +248,7 @@ public class JoinerTest extends TestCase {
     assertEquals("", j.join(ImmutableMap.of()));
     assertEquals(":", j.join(ImmutableMap.of("", "")));
 
-    Map<String, String> mapWithNulls = Maps.newLinkedHashMap();
+    Map<@Nullable String, @Nullable String> mapWithNulls = Maps.newLinkedHashMap();
     mapWithNulls.put("a", null);
     mapWithNulls.put(null, "b");
 
@@ -269,7 +274,7 @@ public class JoinerTest extends TestCase {
     assertEquals("1:a;1:b", j.join(ImmutableMultimap.of("1", "a", "1", "b").entries()));
     assertEquals("1:a;1:b", j.join(ImmutableMultimap.of("1", "a", "1", "b").entries().iterator()));
 
-    Map<String, String> mapWithNulls = Maps.newLinkedHashMap();
+    Map<@Nullable String, @Nullable String> mapWithNulls = Maps.newLinkedHashMap();
     mapWithNulls.put("a", null);
     mapWithNulls.put(null, "b");
     Set<Entry<String, String>> entriesWithNulls = mapWithNulls.entrySet();
@@ -367,6 +372,7 @@ public class JoinerTest extends TestCase {
         Joiner.on(",").useForNull("bar").join(new DontStringMeBro(), null, new DontStringMeBro()));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointers() {
     NullPointerTester tester = new NullPointerTester();

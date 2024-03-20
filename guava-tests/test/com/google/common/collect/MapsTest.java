@@ -26,14 +26,13 @@ import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Maps.EntryTransformer;
 import com.google.common.collect.Maps.ValueDifferenceImpl;
-import com.google.common.collect.SetsTest.Derived;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.SerializableTester;
@@ -62,6 +61,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unit test for {@code Maps}.
@@ -71,6 +71,7 @@ import junit.framework.TestCase;
  * @author Jared Levy
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public class MapsTest extends TestCase {
 
   private static final Comparator<Integer> SOME_COMPARATOR = Collections.reverseOrder();
@@ -94,8 +95,7 @@ public class MapsTest extends TestCase {
     original.put("a", 1);
     original.put("b", 2);
     original.put("c", 3);
-    HashMap<Object, Object> map =
-        Maps.newHashMap((Map<? extends Object, ? extends Object>) original);
+    HashMap<Object, Object> map = Maps.newHashMap(original);
     assertEquals(original, map);
   }
 
@@ -116,6 +116,7 @@ public class MapsTest extends TestCase {
    *
    * <p>This test may fail miserably on non-OpenJDK environments...
    */
+  @J2ktIncompatible
   @GwtIncompatible // reflection
   @AndroidIncompatible // relies on assumptions about OpenJDK
   public void testNewHashMapWithExpectedSize_wontGrow() throws Exception {
@@ -133,6 +134,7 @@ public class MapsTest extends TestCase {
   }
 
   /** Same test as above but for newLinkedHashMapWithExpectedSize */
+  @J2ktIncompatible
   @GwtIncompatible // reflection
   @AndroidIncompatible // relies on assumptions about OpenJDK
   public void testNewLinkedHashMapWithExpectedSize_wontGrow() throws Exception {
@@ -147,6 +149,7 @@ public class MapsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // reflection
   private static void assertWontGrow(
       int size,
@@ -187,6 +190,7 @@ public class MapsTest extends TestCase {
         .isAtMost(bucketsOf(referenceMap));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // reflection
   private static int bucketsOf(HashMap<?, ?> hashMap) throws Exception {
     Field tableField = HashMap.class.getDeclaredField("table");
@@ -368,7 +372,7 @@ public class MapsTest extends TestCase {
   }
 
   public void testToStringImplWithNullKeys() throws Exception {
-    Map<String, String> hashmap = Maps.newHashMap();
+    Map<@Nullable String, String> hashmap = Maps.newHashMap();
     hashmap.put("foo", "bar");
     hashmap.put(null, "baz");
 
@@ -376,14 +380,16 @@ public class MapsTest extends TestCase {
   }
 
   public void testToStringImplWithNullValues() throws Exception {
-    Map<String, String> hashmap = Maps.newHashMap();
+    Map<String, @Nullable String> hashmap = Maps.newHashMap();
     hashmap.put("foo", "bar");
     hashmap.put("baz", null);
 
     assertEquals(hashmap.toString(), Maps.toStringImpl(hashmap));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
+  @AndroidIncompatible // see ImmutableTableTest.testNullPointerInstance
   public void testNullPointerExceptions() {
     new NullPointerTester().testAllPublicStaticMethods(Maps.class);
   }
@@ -950,9 +956,9 @@ public class MapsTest extends TestCase {
   }
 
   public void testToMapWithNullKeys() {
-    Iterable<String> strings = Arrays.asList("one", null, "three");
+    Iterable<@Nullable String> strings = Arrays.asList("one", null, "three");
     try {
-      Maps.toMap(strings, Functions.constant("foo"));
+      Maps.toMap((Iterable<String>) strings, Functions.constant("foo"));
       fail();
     } catch (NullPointerException expected) {
     }
@@ -1013,9 +1019,9 @@ public class MapsTest extends TestCase {
 
   /** Null values are not allowed. */
   public void testUniqueIndexNullValue() {
-    List<String> listWithNull = Lists.newArrayList((String) null);
+    List<@Nullable String> listWithNull = Lists.newArrayList((String) null);
     try {
-      Maps.uniqueIndex(listWithNull, Functions.constant(1));
+      Maps.uniqueIndex((List<String>) listWithNull, Functions.constant(1));
       fail();
     } catch (NullPointerException expected) {
     }
@@ -1031,6 +1037,7 @@ public class MapsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // Maps.fromProperties
   @SuppressWarnings("deprecation") // StringBufferInputStream
   public void testFromProperties() throws IOException {
@@ -1080,6 +1087,7 @@ public class MapsTest extends TestCase {
     assertNotSame(System.getProperty("java.version"), result.get("java.version"));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // Maps.fromProperties
   @SuppressWarnings("serial") // never serialized
   public void testFromPropertiesNullKey() {
@@ -1100,6 +1108,7 @@ public class MapsTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // Maps.fromProperties
   @SuppressWarnings("serial") // never serialized
   public void testFromPropertiesNonStringKeys() {
@@ -1186,12 +1195,12 @@ public class MapsTest extends TestCase {
   }
 
   public void testAsConverter_withNullMapping() throws Exception {
-    BiMap<String, Integer> biMap = HashBiMap.create();
+    BiMap<String, @Nullable Integer> biMap = HashBiMap.create();
     biMap.put("one", 1);
     biMap.put("two", 2);
     biMap.put("three", null);
     try {
-      Maps.asConverter(biMap).convert("three");
+      Maps.asConverter((BiMap<String, Integer>) biMap).convert("three");
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -1347,7 +1356,8 @@ public class MapsTest extends TestCase {
   }
 
   public void testImmutableEntryNull() {
-    Entry<String, Integer> e = Maps.immutableEntry((String) null, (Integer) null);
+    Entry<@Nullable String, @Nullable Integer> e =
+        Maps.immutableEntry((String) null, (Integer) null);
     assertNull(e.getKey());
     assertNull(e.getValue());
     try {
@@ -1370,37 +1380,7 @@ public class MapsTest extends TestCase {
     assertEquals(ImmutableSet.of(1, 2, 3), sync.inverse().keySet());
   }
 
-  static final Predicate<String> NOT_LENGTH_3 =
-      new Predicate<String>() {
-        @Override
-        public boolean apply(String input) {
-          return input == null || input.length() != 3;
-        }
-      };
-
-  static final Predicate<Integer> EVEN =
-      new Predicate<Integer>() {
-        @Override
-        public boolean apply(Integer input) {
-          return input == null || input % 2 == 0;
-        }
-      };
-
-  static final Predicate<Entry<String, Integer>> CORRECT_LENGTH =
-      new Predicate<Entry<String, Integer>>() {
-        @Override
-        public boolean apply(Entry<String, Integer> input) {
-          return input.getKey().length() == input.getValue();
-        }
-      };
-
-  static final Function<Integer, Double> SQRT_FUNCTION =
-      new Function<Integer, Double>() {
-        @Override
-        public Double apply(Integer in) {
-          return Math.sqrt(in);
-        }
-      };
+  private static final Function<Integer, Double> SQRT_FUNCTION = in -> Math.sqrt(in);
 
   public void testTransformValues() {
     Map<String, Integer> map = ImmutableMap.of("a", 4, "b", 9);

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Ignore;
 
 /**
@@ -37,7 +38,8 @@ import org.junit.Ignore;
  */
 @GwtCompatible
 @Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
-public abstract class AbstractMapTester<K, V>
+@ElementTypesAreNonnullByDefault
+public abstract class AbstractMapTester<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractContainerTester<Map<K, V>, Entry<K, V>> {
   protected Map<K, V> getMap() {
     return container;
@@ -139,7 +141,6 @@ public abstract class AbstractMapTester<K, V>
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   protected MinimalCollection<Entry<K, V>> createDisjointCollection() {
     return MinimalCollection.of(e3(), e4());
@@ -167,7 +168,7 @@ public abstract class AbstractMapTester<K, V>
     }
   }
 
-  private static boolean equal(Object a, Object b) {
+  private static boolean equal(@Nullable Object a, @Nullable Object b) {
     return a == b || (a != null && a.equals(b));
   }
 

@@ -25,6 +25,8 @@ import static com.google.common.collect.RegularImmutableMap.checkNoConflictInKey
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMapEntry.NonTerminalImmutableBiMapEntry;
 import com.google.common.collect.RegularImmutableMap.BucketOverflowException;
@@ -47,6 +49,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
 @ElementTypesAreNonnullByDefault
 class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
+  @SuppressWarnings("unchecked") // TODO(cpovirk): Consider storing Entry<?, ?>[] instead.
   static final RegularImmutableBiMap<Object, Object> EMPTY =
       new RegularImmutableBiMap<>(
           null, null, (Entry<Object, Object>[]) ImmutableMap.EMPTY_ENTRY_ARRAY, 0, 0);
@@ -284,7 +287,25 @@ class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
           ImmutableCollection<Entry<V, K>> delegateCollection() {
             return InverseEntrySet.this;
           }
+
+          // redeclare to help optimizers with b/310253115
+          @SuppressWarnings("RedundantOverride")
+          @Override
+          @J2ktIncompatible // serialization
+          @GwtIncompatible // serialization
+          Object writeReplace() {
+            return super.writeReplace();
+          }
         };
+      }
+
+      // redeclare to help optimizers with b/310253115
+      @SuppressWarnings("RedundantOverride")
+      @Override
+      @J2ktIncompatible // serialization
+      @GwtIncompatible // serialization
+      Object writeReplace() {
+        return super.writeReplace();
       }
     }
 
@@ -294,15 +315,19 @@ class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
     }
 
     @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
     Object writeReplace() {
       return new InverseSerializedForm<>(RegularImmutableBiMap.this);
     }
 
+    @J2ktIncompatible // java.io.ObjectInputStream
     private void readObject(ObjectInputStream stream) throws InvalidObjectException {
       throw new InvalidObjectException("Use InverseSerializedForm");
     }
   }
 
+  @J2ktIncompatible // serialization
   private static class InverseSerializedForm<K, V> implements Serializable {
     private final ImmutableBiMap<K, V> forward;
 
@@ -315,5 +340,14 @@ class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
     }
 
     private static final long serialVersionUID = 1;
+  }
+
+  // redeclare to help optimizers with b/310253115
+  @SuppressWarnings("RedundantOverride")
+  @Override
+  @J2ktIncompatible // serialization
+  @GwtIncompatible // serialization
+  Object writeReplace() {
+    return super.writeReplace();
   }
 }

@@ -16,11 +16,12 @@
 
 package com.google.common.io;
 
+import static com.google.common.base.Throwables.throwIfInstanceOf;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -31,8 +32,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.logging.LogRecord;
-import javax.annotation.CheckForNull;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Tests for {@link Closer}.
@@ -393,7 +394,7 @@ public class CloserTest extends TestCase {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof Suppression) {
         Suppression other = (Suppression) obj;
         return closeable.equals(other.closeable)
@@ -435,7 +436,7 @@ public class CloserTest extends TestCase {
       throw new IOException();
     }
 
-    private TestCloseable(@CheckForNull Throwable throwOnClose) {
+    private TestCloseable(@Nullable Throwable throwOnClose) {
       this.throwOnClose = throwOnClose;
     }
 
@@ -447,7 +448,8 @@ public class CloserTest extends TestCase {
     public void close() throws IOException {
       closed = true;
       if (throwOnClose != null) {
-        Throwables.propagateIfPossible(throwOnClose, IOException.class);
+        throwIfInstanceOf(throwOnClose, IOException.class);
+        throwIfUnchecked(throwOnClose);
         throw new AssertionError(throwOnClose);
       }
     }

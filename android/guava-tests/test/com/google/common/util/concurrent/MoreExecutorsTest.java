@@ -38,6 +38,7 @@ import static com.google.common.util.concurrent.MoreExecutors.renamingDecorator;
 import static com.google.common.util.concurrent.MoreExecutors.shutdownAndAwaitTermination;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,6 +73,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
@@ -185,9 +187,9 @@ public class MoreExecutorsTest extends JSR166TestCase {
                 try {
                   Future<?> future =
                       executor.submit(
-                          new Callable<Void>() {
+                          new Callable<@Nullable Void>() {
                             @Override
-                            public Void call() throws Exception {
+                            public @Nullable Void call() throws Exception {
                               // WAIT #1
                               barrier.await(1, TimeUnit.SECONDS);
 
@@ -219,12 +221,7 @@ public class MoreExecutorsTest extends JSR166TestCase {
 
     executor.shutdown();
     assertTrue(executor.isShutdown());
-    try {
-      executor.submit(doNothingRunnable);
-      fail("Should have encountered RejectedExecutionException");
-    } catch (RejectedExecutionException ex) {
-      // good to go
-    }
+    assertThrows(RejectedExecutionException.class, () -> executor.submit(doNothingRunnable));
     assertFalse(executor.isTerminated());
 
     // WAIT #2
@@ -236,12 +233,7 @@ public class MoreExecutorsTest extends JSR166TestCase {
     assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
     assertTrue(executor.awaitTermination(0, TimeUnit.SECONDS));
     assertTrue(executor.isShutdown());
-    try {
-      executor.submit(doNothingRunnable);
-      fail("Should have encountered RejectedExecutionException");
-    } catch (RejectedExecutionException ex) {
-      // good to go
-    }
+    assertThrows(RejectedExecutionException.class, () -> executor.submit(doNothingRunnable));
     assertTrue(executor.isTerminated());
 
     otherThread.join(1000);
@@ -308,11 +300,7 @@ public class MoreExecutorsTest extends JSR166TestCase {
   public void testExecuteAfterShutdown() {
     ExecutorService executor = newDirectExecutorService();
     executor.shutdown();
-    try {
-      executor.execute(EMPTY_RUNNABLE);
-      fail();
-    } catch (RejectedExecutionException expected) {
-    }
+    assertThrows(RejectedExecutionException.class, () -> executor.execute(EMPTY_RUNNABLE));
   }
 
   public <T> void testListeningExecutorServiceInvokeAllJavadocCodeCompiles() throws Exception {

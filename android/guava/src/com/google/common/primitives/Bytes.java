@@ -52,7 +52,7 @@ public final class Bytes {
    * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Byte)
    * value).hashCode()}.
    *
-   * <p><b>Java 8 users:</b> use {@link Byte#hashCode(byte)} instead.
+   * <p><b>Java 8+ users:</b> use {@link Byte#hashCode(byte)} instead.
    *
    * @param value a primitive {@code byte} value
    * @return a hash code for the value
@@ -407,7 +407,7 @@ public final class Bytes {
    *
    * <p>The provided "distance" may be negative, which will rotate left.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(byte[] array, int distance) {
     rotate(array, distance, 0, array.length);
@@ -423,7 +423,7 @@ public final class Bytes {
    *
    * @throws IndexOutOfBoundsException if {@code fromIndex < 0}, {@code toIndex > array.length}, or
    *     {@code toIndex > fromIndex}
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(byte[] array, int distance, int fromIndex, int toIndex) {
     // See Ints.rotate for more details about possible algorithms here.

@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
@@ -101,6 +102,7 @@ public class UnsignedLongTest extends TestCase {
       }
     }
   }
+
 
   public void testValueOfBigInteger() {
     BigInteger min = BigInteger.ZERO;
@@ -286,6 +288,7 @@ public class UnsignedLongTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // serialization
   public void testSerialization() {
     for (long a : TEST_LONGS) {
@@ -293,6 +296,7 @@ public class UnsignedLongTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNulls() {
     new NullPointerTester().testAllPublicStaticMethods(UnsignedLong.class);

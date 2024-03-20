@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -42,10 +41,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Provides static methods for working with {@code Collection} instances.
  *
- * <p><b>Java 8 users:</b> several common uses for this class are now more comprehensively addressed
- * by the new {@link java.util.stream.Stream} library. Read the method documentation below for
- * comparisons. These methods are not being deprecated, but we gently encourage you to migrate to
- * streams.
+ * <p><b>Java 8+ users:</b> several common uses for this class are now more comprehensively
+ * addressed by the new {@link java.util.stream.Stream} library. Read the method documentation below
+ * for comparisons. These methods are not being deprecated, but we gently encourage you to migrate
+ * to streams.
  *
  * @author Chris Povirk
  * @author Mike Bostock
@@ -357,7 +356,6 @@ public final class Collections2 {
    * @throws NullPointerException if the specified iterable is null or has any null elements.
    * @since 12.0
    */
-  @Beta
   public static <E extends Comparable<? super E>> Collection<List<E>> orderedPermutations(
       Iterable<E> elements) {
     return orderedPermutations(elements, Ordering.natural());
@@ -409,7 +407,6 @@ public final class Collections2 {
    *     the specified comparator is null.
    * @since 12.0
    */
-  @Beta
   public static <E> Collection<List<E>> orderedPermutations(
       Iterable<E> elements, Comparator<? super E> comparator) {
     return new OrderedPermutationCollection<E>(elements, comparator);
@@ -571,7 +568,6 @@ public final class Collections2 {
    * @throws NullPointerException if the specified collection is null or has any null elements.
    * @since 12.0
    */
-  @Beta
   public static <E> Collection<List<E>> permutations(Collection<E> elements) {
     return new PermutationCollection<E>(ImmutableList.copyOf(elements));
   }

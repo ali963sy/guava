@@ -22,7 +22,6 @@ import static com.google.common.base.Strings.lenientFormat;
 import static java.lang.Float.NEGATIVE_INFINITY;
 import static java.lang.Float.POSITIVE_INFINITY;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.base.Converter;
@@ -54,7 +53,7 @@ public final class Floats extends FloatsMethodsForWeb {
   /**
    * The number of bytes required to represent a primitive {@code float} value.
    *
-   * <p><b>Java 8 users:</b> use {@link Float#BYTES} instead.
+   * <p><b>Java 8+ users:</b> use {@link Float#BYTES} instead.
    *
    * @since 10.0
    */
@@ -64,7 +63,7 @@ public final class Floats extends FloatsMethodsForWeb {
    * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Float)
    * value).hashCode()}.
    *
-   * <p><b>Java 8 users:</b> use {@link Float#hashCode(float)} instead.
+   * <p><b>Java 8+ users:</b> use {@link Float#hashCode(float)} instead.
    *
    * @param value a primitive {@code float} value
    * @return a hash code for the value
@@ -95,7 +94,7 @@ public final class Floats extends FloatsMethodsForWeb {
    * Returns {@code true} if {@code value} represents a real number. This is equivalent to, but not
    * necessarily implemented as, {@code !(Float.isInfinite(value) || Float.isNaN(value))}.
    *
-   * <p><b>Java 8 users:</b> use {@link Float#isFinite(float)} instead.
+   * <p><b>Java 8+ users:</b> use {@link Float#isFinite(float)} instead.
    *
    * @since 10.0
    */
@@ -250,7 +249,6 @@ public final class Floats extends FloatsMethodsForWeb {
    * @throws IllegalArgumentException if {@code min > max}
    * @since 21.0
    */
-  @Beta
   public static float constrainToRange(float value, float min, float max) {
     // avoid auto-boxing by not using Preconditions.checkArgument(); see Guava issue 3984
     // Reject NaN by testing for the good case (min <= max) instead of the bad (min > max).
@@ -285,7 +283,7 @@ public final class Floats extends FloatsMethodsForWeb {
 
   private static final class FloatConverter extends Converter<String, Float>
       implements Serializable {
-    static final FloatConverter INSTANCE = new FloatConverter();
+    static final Converter<String, Float> INSTANCE = new FloatConverter();
 
     @Override
     protected Float doForward(String value) {
@@ -315,7 +313,6 @@ public final class Floats extends FloatsMethodsForWeb {
    *
    * @since 16.0
    */
-  @Beta
   public static Converter<String, Float> stringConverter() {
     return FloatConverter.INSTANCE;
   }
@@ -472,7 +469,7 @@ public final class Floats extends FloatsMethodsForWeb {
    *
    * <p>The provided "distance" may be negative, which will rotate left.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(float[] array, int distance) {
     rotate(array, distance, 0, array.length);
@@ -488,7 +485,7 @@ public final class Floats extends FloatsMethodsForWeb {
    *
    * @throws IndexOutOfBoundsException if {@code fromIndex < 0}, {@code toIndex > array.length}, or
    *     {@code toIndex > fromIndex}
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(float[] array, int distance, int fromIndex, int toIndex) {
     // See Ints.rotate for more details about possible algorithms here.
@@ -712,7 +709,6 @@ public final class Floats extends FloatsMethodsForWeb {
    * @throws NullPointerException if {@code string} is {@code null}
    * @since 14.0
    */
-  @Beta
   @GwtIncompatible // regular expressions
   @CheckForNull
   public static Float tryParse(String string) {

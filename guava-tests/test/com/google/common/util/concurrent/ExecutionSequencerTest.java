@@ -21,6 +21,7 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.common.testing.GcFinalization;
 import com.google.common.testing.TestLogHandler;
@@ -37,6 +38,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Tests for {@link ExecutionSequencer} */
 public class ExecutionSequencerTest extends TestCase {
@@ -44,7 +46,7 @@ public class ExecutionSequencerTest extends TestCase {
   ExecutorService executor;
 
   private ExecutionSequencer serializer;
-  private SettableFuture<Void> firstFuture;
+  private SettableFuture<@Nullable Void> firstFuture;
   private TestCallable firstCallable;
 
   @Override
@@ -76,7 +78,8 @@ public class ExecutionSequencerTest extends TestCase {
     @SuppressWarnings({"unused", "nullness"})
     Future<?> possiblyIgnoredError = serializer.submitAsync(firstCallable, directExecutor());
     TestCallable secondCallable = new TestCallable(Futures.<Void>immediateFuture(null));
-    ListenableFuture<Void> secondFuture = serializer.submitAsync(secondCallable, directExecutor());
+    ListenableFuture<@Nullable Void> secondFuture =
+        serializer.submitAsync(secondCallable, directExecutor());
     TestCallable thirdCallable = new TestCallable(Futures.<Void>immediateFuture(null));
     @SuppressWarnings({"unused", "nullness"})
     Future<?> possiblyIgnoredError1 = serializer.submitAsync(thirdCallable, directExecutor());
@@ -90,7 +93,7 @@ public class ExecutionSequencerTest extends TestCase {
 
   public void testCancellationMultipleThreads() throws Exception {
     final BlockingCallable blockingCallable = new BlockingCallable();
-    ListenableFuture<Void> unused = serializer.submit(blockingCallable, executor);
+    ListenableFuture<@Nullable Void> unused = serializer.submit(blockingCallable, executor);
     ListenableFuture<Boolean> future2 =
         serializer.submit(
             new Callable<Boolean>() {
@@ -117,7 +120,7 @@ public class ExecutionSequencerTest extends TestCase {
 
   public void testSecondTaskWaitsForFirstEvenIfCancelled() throws Exception {
     final BlockingCallable blockingCallable = new BlockingCallable();
-    ListenableFuture<Void> future1 = serializer.submit(blockingCallable, executor);
+    ListenableFuture<@Nullable Void> future1 = serializer.submit(blockingCallable, executor);
     ListenableFuture<Boolean> future2 =
         serializer.submit(
             new Callable<Boolean>() {
@@ -147,18 +150,19 @@ public class ExecutionSequencerTest extends TestCase {
     assertThat(getDone(future2)).isFalse();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible
   @J2ObjCIncompatible // gc
   @AndroidIncompatible
   public void testCancellationWithReferencedObject() throws Exception {
     Object toBeGCed = new Object();
     WeakReference<Object> ref = new WeakReference<>(toBeGCed);
-    final SettableFuture<Void> settableFuture = SettableFuture.create();
+    final SettableFuture<@Nullable Void> settableFuture = SettableFuture.create();
     ListenableFuture<?> ignored =
         serializer.submitAsync(
-            new AsyncCallable<Void>() {
+            new AsyncCallable<@Nullable Void>() {
               @Override
-              public ListenableFuture<Void> call() {
+              public ListenableFuture<@Nullable Void> call() {
                 return settableFuture;
               }
             },
@@ -195,9 +199,9 @@ public class ExecutionSequencerTest extends TestCase {
     final Future<?>[] thingToCancel = new Future<?>[1];
     results.add(
         serializer.submit(
-            new Callable<Void>() {
+            new Callable<@Nullable Void>() {
               @Override
-              public Void call() {
+              public @Nullable Void call() {
                 thingToCancel[0].cancel(false);
                 return null;
               }
@@ -223,13 +227,13 @@ public class ExecutionSequencerTest extends TestCase {
   }
 
   public void testAvoidsStackOverflow_manySubmitted() throws Exception {
-    final SettableFuture<Void> settableFuture = SettableFuture.create();
-    ArrayList<ListenableFuture<Void>> results = new ArrayList<>(50_001);
+    final SettableFuture<@Nullable Void> settableFuture = SettableFuture.create();
+    ArrayList<ListenableFuture<@Nullable Void>> results = new ArrayList<>(50_001);
     results.add(
         serializer.submitAsync(
-            new AsyncCallable<Void>() {
+            new AsyncCallable<@Nullable Void>() {
               @Override
-              public ListenableFuture<Void> call() {
+              public ListenableFuture<@Nullable Void> call() {
                 return settableFuture;
               }
             },
@@ -242,12 +246,12 @@ public class ExecutionSequencerTest extends TestCase {
   }
 
   public void testAvoidsStackOverflow_manyCancelled() throws Exception {
-    final SettableFuture<Void> settableFuture = SettableFuture.create();
-    ListenableFuture<Void> unused =
+    final SettableFuture<@Nullable Void> settableFuture = SettableFuture.create();
+    ListenableFuture<@Nullable Void> unused =
         serializer.submitAsync(
-            new AsyncCallable<Void>() {
+            new AsyncCallable<@Nullable Void>() {
               @Override
-              public ListenableFuture<Void> call() {
+              public ListenableFuture<@Nullable Void> call() {
                 return settableFuture;
               }
             },
@@ -270,12 +274,12 @@ public class ExecutionSequencerTest extends TestCase {
   }
 
   public void testAvoidsStackOverflow_alternatingCancelledAndSubmitted() throws Exception {
-    final SettableFuture<Void> settableFuture = SettableFuture.create();
-    ListenableFuture<Void> unused =
+    final SettableFuture<@Nullable Void> settableFuture = SettableFuture.create();
+    ListenableFuture<@Nullable Void> unused =
         serializer.submitAsync(
-            new AsyncCallable<Void>() {
+            new AsyncCallable<@Nullable Void>() {
               @Override
-              public ListenableFuture<Void> call() {
+              public ListenableFuture<@Nullable Void> call() {
                 return settableFuture;
               }
             },
@@ -324,6 +328,7 @@ public class ExecutionSequencerTest extends TestCase {
   private static final int ITERATION_COUNT = 50_000;
   private static final int DIRECT_EXECUTIONS_PER_THREAD = 100;
 
+  @J2ktIncompatible
   @GwtIncompatible // threads
   public void testAvoidsStackOverflow_multipleThreads() throws Exception {
     final LongHolder holder = new LongHolder();
@@ -344,12 +349,12 @@ public class ExecutionSequencerTest extends TestCase {
                   },
                   service)
               .get();
-      final SettableFuture<Void> settableFuture = SettableFuture.create();
+      final SettableFuture<@Nullable Void> settableFuture = SettableFuture.create();
       ListenableFuture<?> unused =
           serializer.submitAsync(
-              new AsyncCallable<Void>() {
+              new AsyncCallable<@Nullable Void>() {
                 @Override
-                public ListenableFuture<Void> call() {
+                public ListenableFuture<@Nullable Void> call() {
                   return settableFuture;
                 }
               },
@@ -359,9 +364,9 @@ public class ExecutionSequencerTest extends TestCase {
           // after some number of iterations, switch threads
           unused =
               serializer.submit(
-                  new Callable<Void>() {
+                  new Callable<@Nullable Void>() {
                     @Override
-                    public Void call() {
+                    public @Nullable Void call() {
                       holder.count++;
                       return null;
                     }
@@ -383,9 +388,9 @@ public class ExecutionSequencerTest extends TestCase {
           // Otherwise, schedule a task on directExecutor
           unused =
               serializer.submit(
-                  new Callable<Void>() {
+                  new Callable<@Nullable Void>() {
                     @Override
-                    public Void call() {
+                    public @Nullable Void call() {
                       holder.count++;
                       return null;
                     }
@@ -416,14 +421,14 @@ public class ExecutionSequencerTest extends TestCase {
     assertThat(second.toString()).contains(secondCallable.future.toString());
   }
 
-  private static class BlockingCallable implements Callable<Void> {
+  private static class BlockingCallable implements Callable<@Nullable Void> {
     private final CountDownLatch startLatch = new CountDownLatch(1);
     private final CountDownLatch stopLatch = new CountDownLatch(1);
 
     private volatile boolean running = false;
 
     @Override
-    public Void call() throws InterruptedException {
+    public @Nullable Void call() throws InterruptedException {
       running = true;
       startLatch.countDown();
       stopLatch.await();
@@ -444,17 +449,17 @@ public class ExecutionSequencerTest extends TestCase {
     }
   }
 
-  private static final class TestCallable implements AsyncCallable<Void> {
+  private static final class TestCallable implements AsyncCallable<@Nullable Void> {
 
-    private final ListenableFuture<Void> future;
+    private final ListenableFuture<@Nullable Void> future;
     private boolean called = false;
 
-    private TestCallable(ListenableFuture<Void> future) {
+    private TestCallable(ListenableFuture<@Nullable Void> future) {
       this.future = future;
     }
 
     @Override
-    public ListenableFuture<Void> call() throws Exception {
+    public ListenableFuture<@Nullable Void> call() throws Exception {
       called = true;
       return future;
     }

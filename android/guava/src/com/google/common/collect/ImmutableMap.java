@@ -22,8 +22,9 @@ import static com.google.common.collect.CollectPreconditions.checkEntryNotNull;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.DoNotMock;
@@ -45,6 +46,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -64,6 +69,44 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @SuppressWarnings("serial") // we're overriding default serialization
 @ElementTypesAreNonnullByDefault
 public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
+
+  /**
+   * Returns a {@link Collector} that accumulates elements into an {@code ImmutableMap} whose keys
+   * and values are the result of applying the provided mapping functions to the input elements.
+   * Entries appear in the result {@code ImmutableMap} in encounter order.
+   *
+   * <p>If the mapped keys contain duplicates (according to {@link Object#equals(Object)}, an {@code
+   * IllegalArgumentException} is thrown when the collection operation is performed. (This differs
+   * from the {@code Collector} returned by {@link Collectors#toMap(Function, Function)}, which
+   * throws an {@code IllegalStateException}.)
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // Users will use this only if they're already using streams.
+  static <T extends @Nullable Object, K, V> Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
+      Function<? super T, ? extends K> keyFunction,
+      Function<? super T, ? extends V> valueFunction) {
+    return CollectCollectors.toImmutableMap(keyFunction, valueFunction);
+  }
+
+  /**
+   * Returns a {@link Collector} that accumulates elements into an {@code ImmutableMap} whose keys
+   * and values are the result of applying the provided mapping functions to the input elements.
+   *
+   * <p>If the mapped keys contain duplicates (according to {@link Object#equals(Object)}), the
+   * values are merged using the specified merging function. If the merging function returns {@code
+   * null}, then the collector removes the value that has been computed for the key thus far (though
+   * future occurrences of the key would reinsert it).
+   *
+   * <p>Entries will appear in the encounter order of the first occurrence of the key.
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // Users will use this only if they're already using streams.
+  static <T extends @Nullable Object, K, V> Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
+      Function<? super T, ? extends K> keyFunction,
+      Function<? super T, ? extends V> valueFunction,
+      BinaryOperator<V> mergeFunction) {
+    return CollectCollectors.toImmutableMap(keyFunction, valueFunction, mergeFunction);
+  }
 
   /**
    * Returns the empty map. This map behaves and performs comparably to {@link
@@ -335,7 +378,6 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
    *
    * @since 23.1
    */
-  @Beta
   public static <K, V> Builder<K, V> builderWithExpectedSize(int expectedSize) {
     checkNonnegative(expectedSize, "expectedSize");
     return new Builder<>(expectedSize);
@@ -469,7 +511,6 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
      * @since 19.0
      */
     @CanIgnoreReturnValue
-    @Beta
     public Builder<K, V> putAll(Iterable<? extends Entry<? extends K, ? extends V>> entries) {
       if (entries instanceof Collection) {
         ensureCapacity(size + ((Collection<?>) entries).size());
@@ -491,7 +532,6 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
      * @since 19.0
      */
     @CanIgnoreReturnValue
-    @Beta
     public Builder<K, V> orderEntriesByValue(Comparator<? super V> valueComparator) {
       checkState(this.valueComparator == null, "valueComparator was already set");
       this.valueComparator = checkNotNull(valueComparator, "valueComparator");
@@ -697,7 +737,6 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
    * @throws IllegalArgumentException if two entries have the same key
    * @since 19.0
    */
-  @Beta
   public static <K, V> ImmutableMap<K, V> copyOf(
       Iterable<? extends Entry<? extends K, ? extends V>> entries) {
     int initialCapacity =
@@ -731,6 +770,15 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
         public UnmodifiableIterator<Entry<K, V>> iterator() {
           return entryIterator();
         }
+
+        // redeclare to help optimizers with b/310253115
+        @SuppressWarnings("RedundantOverride")
+        @Override
+        @J2ktIncompatible // serialization
+        @GwtIncompatible // serialization
+        Object writeReplace() {
+          return super.writeReplace();
+        }
       }
       return new EntrySetImpl();
     }
@@ -738,6 +786,15 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
     @Override
     ImmutableCollection<V> createValues() {
       return new ImmutableMapValues<>(this);
+    }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
     }
   }
 
@@ -827,7 +884,8 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
    *
    * @since 23.5 (but since 21.0 in the JRE <a
    *     href="https://github.com/google/guava#guava-google-core-libraries-for-java">flavor</a>).
-   *     Note that API Level 24 users can call this method with any version of Guava.
+   *     Note, however, that Java 8+ users can call this method with any version and flavor of
+   *     Guava.
    */
   // @Override under Java 8 / API Level 24
   @CheckForNull
@@ -1020,6 +1078,15 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
         }
       };
     }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   @Override
@@ -1048,6 +1115,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
    * reconstructed using public factory methods. This ensures that the implementation types remain
    * as implementation details.
    */
+  @J2ktIncompatible // serialization
   static class SerializedForm<K, V> implements Serializable {
     // This object retains references to collections returned by keySet() and value(). This saves
     // bytes when the both the map and its keySet or value collection are written to the same
@@ -1127,11 +1195,15 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
    * method. Publicly-accessible subclasses must override this method and should return a subclass
    * of SerializedForm whose readResolve() method returns objects of the subclass type.
    */
+  @J2ktIncompatible // serialization
   Object writeReplace() {
     return new SerializedForm<>(this);
   }
 
+  @J2ktIncompatible // java.io.ObjectInputStream
   private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }
+
+  private static final long serialVersionUID = 0xdecaf;
 }

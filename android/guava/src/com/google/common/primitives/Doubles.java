@@ -22,7 +22,6 @@ import static com.google.common.base.Strings.lenientFormat;
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.base.Converter;
@@ -54,7 +53,7 @@ public final class Doubles extends DoublesMethodsForWeb {
   /**
    * The number of bytes required to represent a primitive {@code double} value.
    *
-   * <p><b>Java 8 users:</b> use {@link Double#BYTES} instead.
+   * <p><b>Java 8+ users:</b> use {@link Double#BYTES} instead.
    *
    * @since 10.0
    */
@@ -64,7 +63,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Double)
    * value).hashCode()}.
    *
-   * <p><b>Java 8 users:</b> use {@link Double#hashCode(double)} instead.
+   * <p><b>Java 8+ users:</b> use {@link Double#hashCode(double)} instead.
    *
    * @param value a primitive {@code double} value
    * @return a hash code for the value
@@ -98,7 +97,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    * Returns {@code true} if {@code value} represents a real number. This is equivalent to, but not
    * necessarily implemented as, {@code !(Double.isInfinite(value) || Double.isNaN(value))}.
    *
-   * <p><b>Java 8 users:</b> use {@link Double#isFinite(double)} instead.
+   * <p><b>Java 8+ users:</b> use {@link Double#isFinite(double)} instead.
    *
    * @since 10.0
    */
@@ -253,7 +252,6 @@ public final class Doubles extends DoublesMethodsForWeb {
    * @throws IllegalArgumentException if {@code min > max}
    * @since 21.0
    */
-  @Beta
   public static double constrainToRange(double value, double min, double max) {
     // avoid auto-boxing by not using Preconditions.checkArgument(); see Guava issue 3984
     // Reject NaN by testing for the good case (min <= max) instead of the bad (min > max).
@@ -288,7 +286,7 @@ public final class Doubles extends DoublesMethodsForWeb {
 
   private static final class DoubleConverter extends Converter<String, Double>
       implements Serializable {
-    static final DoubleConverter INSTANCE = new DoubleConverter();
+    static final Converter<String, Double> INSTANCE = new DoubleConverter();
 
     @Override
     protected Double doForward(String value) {
@@ -318,7 +316,6 @@ public final class Doubles extends DoublesMethodsForWeb {
    *
    * @since 16.0
    */
-  @Beta
   public static Converter<String, Double> stringConverter() {
     return DoubleConverter.INSTANCE;
   }
@@ -475,7 +472,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    *
    * <p>The provided "distance" may be negative, which will rotate left.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(double[] array, int distance) {
     rotate(array, distance, 0, array.length);
@@ -491,7 +488,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    *
    * @throws IndexOutOfBoundsException if {@code fromIndex < 0}, {@code toIndex > array.length}, or
    *     {@code toIndex > fromIndex}
-   * @since NEXT
+   * @since 32.0.0
    */
   public static void rotate(double[] array, int distance, int fromIndex, int toIndex) {
     // See Ints.rotate for more details about possible algorithms here.
@@ -753,7 +750,6 @@ public final class Doubles extends DoublesMethodsForWeb {
    * @throws NullPointerException if {@code string} is {@code null}
    * @since 14.0
    */
-  @Beta
   @GwtIncompatible // regular expressions
   @CheckForNull
   public static Double tryParse(String string) {
