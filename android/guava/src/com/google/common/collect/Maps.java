@@ -683,7 +683,7 @@ public final class Maps {
 
     static <V extends @Nullable Object> ValueDifference<V> create(
         @ParametricNullness V left, @ParametricNullness V right) {
-      return new ValueDifferenceImpl<V>(left, right);
+      return new ValueDifferenceImpl<>(left, right);
     }
 
     private ValueDifferenceImpl(@ParametricNullness V left, @ParametricNullness V right) {
@@ -3325,7 +3325,8 @@ public final class Maps {
       return new Predicate<Entry<V, K>>() {
         @Override
         public boolean apply(Entry<V, K> input) {
-          return forwardPredicate.apply(Maps.immutableEntry(input.getValue(), input.getKey()));
+          return forwardPredicate.apply(
+              Maps.<K, V>immutableEntry(input.getValue(), input.getKey()));
         }
       };
     }
